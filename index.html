@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
 <title>Caça aos Ovos</title>
 <!-- ícone da aba do navegador: um ovo -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🥚%3C/text%3E%3C/svg%3E">
@@ -189,6 +190,12 @@
   .pista .ponto { top: 12px; right: 12px; border-color: var(--card); }
   .pista-texto { flex: 1; min-width: 0; }
   .pista-meta { font-size: .8rem; color: var(--muted); }
+  /* etiquetas que só as contas debugger veem (pista escondida ou agendada) */
+  .etq-teste {
+    display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px;
+    font-size: .72rem; font-weight: 700; color: #1b1712; background: #f2c14e; vertical-align: 1px;
+  }
+  .etq-teste.agendada { background: #8fb8ff; }
   .pista-titulo { font-weight: 700; font-size: 1.1rem; line-height: 1.3; margin: 4px 0; padding-right: 14px; }
   .pista-desc {
     color: var(--muted); font-size: .92rem; margin-bottom: 6px;
@@ -658,6 +665,14 @@
   }
   const temPistaNova = () => pistas.some(p => !p.vista);
 
+  // Tempo da pista + etiquetas de teste (só aparecem para contas debugger)
+  function metaPista(p) {
+    const quando = new Date(p.publicada_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    return (p.agendada ? "" : tempoAtras(p.publicada_em))
+      + (p.oculta ? `<span class="etq-teste">🙈 Oculta</span>` : "")
+      + (p.agendada ? `<span class="etq-teste agendada">⏰ Agendada · ${quando}</span>` : "");
+  }
+
   function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
   function traduzErro(e) {
@@ -1079,7 +1094,7 @@
     return `
       <div class="pista ${p.vista ? "" : "nova"}" role="button" tabindex="0" data-id="${p.id}">
         <div class="pista-texto">
-          <div class="pista-meta">${tempoAtras(p.publicada_em)}</div>
+          <div class="pista-meta">${metaPista(p)}</div>
           <div class="pista-titulo">${textoRico(p.titulo)}</div>
           ${p.descricao ? `<div class="pista-desc">${textoRico(p.descricao)}</div>` : ""}
         </div>
@@ -1152,7 +1167,7 @@
     app.innerHTML = topo() + `
       <article class="card pista-det">
         <button class="link" id="voltar">← Voltar para as pistas</button>
-        <div class="pista-meta" style="margin-top:8px">${tempoAtras(p.publicada_em)}</div>
+        <div class="pista-meta" style="margin-top:8px">${metaPista(p)}</div>
         <h2>${textoRico(p.titulo)}</h2>
         ${p.descricao ? `<p class="pista-lead">${textoRico(p.descricao)}</p>` : ""}
         ${p.texto ? `<p class="desc">${textoRico(p.texto)}</p>` : ""}
