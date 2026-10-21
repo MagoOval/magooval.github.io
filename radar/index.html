@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>RADAR</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='none' stroke='%2339ff6a' stroke-width='8'/%3E%3Cpath d='M50 50 L94 50 A44 44 0 0 0 81 19 Z' fill='%2339ff6a'/%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="../desafio.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #39ff6a;
+    --verde-medio: #1fa845;
+    --verde-escuro: #0d3d1a;
+    --vermelho: #ff3b3b;
+    --fundo: #000;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overscroll-behavior: none; }
+  body {
+    background-color: var(--fundo);
+    background-image:
+      linear-gradient(rgba(57,255,106,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(57,255,106,.07) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--verde);
+    font: 22px/1.2 "VT323", ui-monospace, monospace;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 16px 18px; gap: 10px;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a { color: var(--verde); }
+  .voltar { align-self: flex-start; font-size: 1.05rem; text-decoration: none; opacity: .75; }
+  .voltar:hover { opacity: 1; }
+  h1 {
+    margin: 0; font: 400 clamp(1.6rem, 8vw, 2.6rem)/1 "Press Start 2P", monospace;
+    letter-spacing: .12em; text-shadow: 0 0 8px rgba(57,255,106,.8), 0 0 22px rgba(57,255,106,.35);
+  }
+  .hud {
+    width: var(--tam, 320px); max-width: 100%;
+    display: flex; justify-content: space-between; font-size: 1.15rem; letter-spacing: .05em;
+  }
+  .hud .sinais { color: var(--vermelho); text-shadow: 0 0 6px rgba(255,59,59,.7); visibility: hidden; }
+  .hud .sinais.on { visibility: visible; }
+  .piscar { animation: piscar 1s steps(2) infinite; }
+  @keyframes piscar { 50% { opacity: .25; } }
+  .tela { position: relative; width: var(--tam, 320px); height: var(--tam, 320px); }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .painel {
+    position: absolute; inset: 14%; display: none;
+    flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px;
+    background: rgba(0,0,0,.88); border: 2px solid var(--verde); border-radius: 6px; padding: 14px;
+    box-shadow: 0 0 18px rgba(57,255,106,.35), inset 0 0 18px rgba(57,255,106,.15);
+  }
+  .painel.on { display: flex; }
+  .painel h2 { margin: 0; font: 400 clamp(.7rem, 3.2vw, .95rem)/1.5 "Press Start 2P", monospace; }
+  .painel p { margin: 0; white-space: pre-line; font-size: 1.25rem; }
+  .painel img { max-width: 100%; max-height: 40%; object-fit: contain; }
+  .destaque, .chave {
+    display: inline-block; margin-top: 4px; padding: 2px 10px; border: 1px dashed var(--verde);
+    font: 400 clamp(.75rem, 3.6vw, 1rem)/1.6 "Press Start 2P", monospace;
+    text-shadow: 0 0 8px rgba(57,255,106,.9);
+  }
+  .vermelho { color: var(--vermelho); text-shadow: 0 0 8px rgba(255,59,59,.8); }
+  button {
+    font: 400 .7rem/1 "Press Start 2P", monospace; color: #000; background: var(--verde);
+    border: 0; border-radius: 4px; padding: 10px 12px; cursor: pointer;
+  }
+  button:active { transform: translateY(1px); }
+  .controles { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 2px; }
+  .joy {
+    position: relative; width: 132px; height: 132px; border-radius: 50%; touch-action: none;
+    border: 2px solid var(--verde-medio); background: radial-gradient(circle, rgba(57,255,106,.10), rgba(57,255,106,.02) 70%);
+    box-shadow: 0 0 14px rgba(57,255,106,.2), inset 0 0 14px rgba(57,255,106,.12);
+  }
+  .joy::before, .joy::after { content: ""; position: absolute; background: rgba(57,255,106,.25); }
+  .joy::before { left: 50%; top: 10px; bottom: 10px; width: 1px; }
+  .joy::after { top: 50%; left: 10px; right: 10px; height: 1px; }
+  .knob {
+    position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #8dffaa, var(--verde) 45%, var(--verde-medio));
+    box-shadow: 0 0 14px rgba(57,255,106,.7); z-index: 1; pointer-events: none;
+  }
+  .dica { font-size: 1rem; opacity: .6; text-align: center; }
+  @media (hover: none) { .dica-teclado { display: none; } }
+</style>
+</head>
+<body>
+  <a class="voltar" href="../">&lt; VOLTAR AO JOGO</a>
+  <h1>RADAR</h1>
+
+  <div class="hud">
+    <span id="estado" class="piscar">INICIANDO...</span>
+    <span id="sinais" class="sinais">◆ 0/5</span>
+  </div>
+
+  <div class="tela">
+    <canvas id="radar"></canvas>
+
+    <div class="painel" id="pAcesso">
+      <h2>ACESSO NEGADO</h2>
+      <p>Entre no Caça aos Ovos primeiro.</p>
+      <a href="../"><button type="button">ENTRAR</button></a>
+    </div>
+
+    <div class="painel" id="pSaida">
+      <h2>SAIDA ENCONTRADA</h2>
+      <p>Chave de acesso:</p>
+      <span class="chave">radar12</span>
+      <button type="button" id="bVoltarLab">VOLTAR AO LABIRINTO</button>
+    </div>
+
+    <div class="painel" id="pTransmissao">
+      <h2 id="tTitulo">TRANSMISSAO</h2>
+      <p id="tTexto"></p>
+      <img id="tImagem" alt="" hidden>
+      <button type="button" id="bFechar">FECHAR</button>
+    </div>
+  </div>
+
+  <div class="controles">
+    <div class="joy" id="joy" aria-label="Controle de movimento"><div class="knob" id="knob"></div></div>
+  </div>
+  <div class="dica"><span class="dica-teclado">Setas ou WASD também funcionam · </span><span id="bTransmissao" hidden><button type="button">VER TRANSMISSAO</button></span></div>
+
+<script>
+(() => {
+  // ================= CONFIGURAÇÃO =================
+  const SLUG = "radar";                 // apelido do desafio no Supabase (tabela desafios)
+  const VOLTA_MS = 4000;                // tempo de uma volta do radar
+  const APAGAR_MS = 2600;               // quanto tempo o muro revelado leva para apagar
+  const RAIO_VISAO = 4.3;               // quanto do labirinto cabe na tela (em "casas")
+  const RAIO_PERTO = 1.25;              // muros sempre visíveis em volta do jogador
+  const VELOCIDADE = 2.4;               // casas por segundo
+  const RAIO_JOGADOR = 0.15, COLISAO = 0.2, PEGAR_OVO = 0.32;
+
+  // Muros do labirinto (pontos da grade triangular: [i1, j1, i2, j2])
+  const MUROS = [[0,0,6,0],[7,0,12,0],[3,1,5,1],[9,1,10,1],[0,2,1,2],[2,2,4,2],[7,2,9,2],[10,2,11,2],[-3,3,-2,3],[0,3,1,3],[3,3,4,3],[7,3,9,3],[10,3,11,3],[2,4,4,4],[7,4,8,4],[10,4,11,4],[1,5,3,5],[8,5,10,5],[-6,6,-5,6],[-1,6,2,6],[3,6,5,6],[8,6,9,6],[-2,7,-1,7],[5,7,6,7],[7,7,8,7],[-2,8,0,8],[1,8,2,8],[10,8,11,8],[-7,9,-5,9],[-1,9,0,9],[3,9,4,9],[10,9,11,9],[-8,10,-7,10],[-6,10,-5,10],[-3,10,-2,10],[0,10,2,10],[3,10,4,10],[5,10,6,10],[7,10,9,10],[-9,11,-8,11],[-5,11,-4,11],[-3,11,-2,11],[2,11,3,11],[4,11,6,11],[7,11,11,11],[-4,12,-3,12],[2,12,6,12],[7,12,8,12],[9,12,10,12],[-5,13,-4,13],[6,13,7,13],[8,13,9,13],[-6,14,-5,14],[-4,14,-3,14],[-1,14,3,14],[4,14,5,14],[8,14,9,14],[-11,15,-10,15],[-9,15,-8,15],[-3,15,-2,15],[8,15,9,15],[-11,16,-10,16],[-9,16,-8,16],[-7,16,-6,16],[-4,16,-2,16],[2,16,3,16],[4,16,5,16],[-9,17,-7,17],[-4,17,-3,17],[-1,17,0,17],[4,17,5,17],[-7,18,-5,18],[-4,18,-3,18],[3,18,4,18],[-11,19,-10,19],[-8,19,-7,19],[-4,19,-2,19],[0,19,1,19],[2,19,3,19],[4,19,5,19],[-10,20,-9,20],[-1,20,0,20],[1,20,2,20],[3,20,4,20],[-3,21,0,21],[1,21,3,21],[-12,22,-11,22],[-10,22,-9,22],[-5,22,-4,22],[-3,22,-2,22],[-11,23,-10,23],[-6,23,-5,23],[-12,24,0,24],[-11,11,-12,12],[-12,12,-12,13],[-10,10,-11,11],[-11,12,-12,13],[-12,13,-12,14],[-9,9,-10,10],[-10,11,-11,12],[-12,14,-12,15],[-8,8,-9,9],[-9,10,-10,11],[-10,12,-11,13],[-11,13,-11,14],[-12,15,-12,16],[-7,7,-8,8],[-8,9,-9,10],[-9,11,-10,12],[-11,15,-12,16],[-12,16,-12,17],[-6,6,-7,7],[-9,12,-10,13],[-10,13,-10,14],[-10,14,-11,15],[-12,17,-12,18],[-5,5,-6,6],[-6,7,-7,8],[-7,9,-8,10],[-9,12,-9,13],[-12,18,-12,19],[-4,4,-5,5],[-6,7,-6,8],[-8,11,-8,12],[-9,13,-9,14],[-11,17,-11,18],[-12,19,-12,20],[-3,3,-4,4],[-4,5,-5,6],[-5,6,-5,7],[-6,8,-6,9],[-7,10,-7,11],[-8,12,-8,13],[-9,14,-9,15],[-9,15,-10,16],[-11,18,-11,19],[-12,20,-12,21],[-2,2,-3,3],[-3,4,-4,5],[-4,6,-5,7],[-5,7,-5,8],[-6,10,-7,11],[-7,11,-7,12],[-7,12,-8,13],[-8,13,-8,14],[-9,16,-10,17],[-11,19,-11,20],[-12,21,-12,22],[-1,1,-2,2],[-3,5,-4,6],[-6,11,-7,12],[-9,17,-10,18],[-12,22,-12,23],[0,0,-1,1],[-1,2,-2,3],[-3,6,-4,7],[-4,7,-4,8],[-4,8,-5,9],[-7,13,-7,14],[-7,14,-8,15],[-8,15,-8,16],[-9,18,-10,19],[-10,19,-10,20],[-10,20,-11,21],[-12,23,-12,24],[0,1,-1,2],[-1,3,-2,4],[-2,4,-2,5],[-2,5,-3,6],[-3,6,-3,7],[-4,9,-5,10],[-5,10,-5,11],[-5,11,-6,12],[-6,12,-6,13],[-8,17,-9,18],[-10,21,-11,22],[-11,22,-11,23],[0,2,-1,3],[-1,4,-2,5],[-2,5,-2,6],[-6,13,-6,14],[-6,14,-7,15],[-7,15,-7,16],[-9,19,-9,20],[-2,7,-3,8],[-3,9,-4,10],[-5,12,-5,13],[-8,18,-8,19],[-9,20,-9,21],[-9,21,-10,22],[2,0,1,1],[-1,5,-1,6],[-1,6,-2,7],[-2,8,-3,9],[-3,10,-4,11],[-4,11,-4,12],[-5,14,-6,15],[-7,17,-7,18],[-8,20,-9,21],[2,1,1,2],[0,4,0,5],[-2,9,-3,10],[-5,15,-6,16],[-8,21,-9,22],[-9,22,-9,23],[3,0,2,1],[2,2,1,3],[1,3,1,4],[0,5,0,6],[-1,8,-2,9],[-4,13,-4,14],[-4,14,-5,15],[-5,16,-6,17],[-7,19,-7,20],[-9,23,-9,24],[3,1,2,2],[1,4,1,5],[0,7,-1,8],[-2,10,-2,11],[-4,15,-5,16],[-5,17,-6,18],[-7,20,-7,21],[-7,21,-8,22],[-8,22,-8,23],[2,3,2,4],[-2,11,-2,12],[-3,13,-3,14],[-4,15,-4,16],[-4,16,-5,17],[-6,19,-6,20],[-8,23,-8,24],[3,2,3,3],[1,6,1,7],[1,7,0,8],[0,9,-1,10],[-1,11,-2,12],[-2,12,-2,13],[-4,17,-5,18],[-5,18,-5,19],[-6,20,-6,21],[-6,21,-7,22],[-7,22,-7,23],[1,8,0,9],[0,10,-1,11],[-2,13,-2,14],[-5,19,-5,20],[-5,20,-6,21],[-6,22,-7,23],[-4,18,-4,19],[-6,23,-7,24],[5,2,4,3],[3,5,3,6],[3,6,2,7],[2,8,1,9],[1,9,1,10],[-1,14,-2,15],[-4,19,-4,20],[-5,21,-5,22],[6,0,6,1],[5,3,4,4],[4,4,4,5],[3,7,2,8],[-1,15,-2,16],[-2,16,-2,17],[-2,17,-3,18],[-4,20,-4,21],[6,1,6,2],[6,2,5,3],[3,7,3,8],[2,9,2,10],[-2,18,-3,19],[6,3,5,4],[5,4,5,5],[3,8,3,9],[2,10,2,11],[1,13,0,14],[0,15,-1,16],[-1,16,-1,17],[-1,17,-2,18],[-3,20,-3,21],[-3,21,-4,22],[-4,22,-4,23],[-4,23,-5,24],[7,1,7,2],[7,2,6,3],[4,7,4,8],[2,11,2,12],[2,12,1,13],[-2,19,-2,20],[8,0,8,1],[7,3,6,4],[6,4,6,5],[6,5,5,6],[5,6,5,7],[5,7,4,8],[4,8,4,9],[1,15,0,16],[0,17,-1,18],[-1,18,-1,19],[-3,22,-3,23],[-3,23,-4,24],[8,1,8,2],[6,5,6,6],[3,12,2,13],[2,14,1,15],[1,16,0,17],[-1,19,-1,20],[5,8,5,9],[5,9,4,10],[4,10,4,11],[3,13,2,14],[2,15,1,16],[1,17,0,18],[-2,22,-2,23],[8,4,7,5],[7,5,7,6],[7,6,6,7],[2,16,1,17],[1,17,1,18],[7,7,6,8],[6,8,6,9],[4,13,3,14],[3,15,2,16],[-1,22,-1,23],[10,1,10,2],[10,2,9,3],[9,3,9,4],[6,9,6,10],[4,14,3,15],[2,17,2,18],[2,18,1,19],[1,19,1,20],[1,20,0,21],[0,21,0,22],[-1,23,-1,24],[9,4,9,5],[7,8,7,9],[5,13,4,14],[4,15,3,16],[3,16,3,17],[0,22,0,23],[11,1,11,2],[8,7,8,8],[7,9,7,10],[7,10,6,11],[4,15,4,16],[12,0,12,1],[9,6,9,7],[8,8,8,9],[7,11,6,12],[6,12,6,13],[6,13,5,14],[5,14,5,15],[4,16,4,17],[1,22,1,23],[1,23,0,24],[12,1,12,2],[12,2,11,3],[10,5,10,6],[9,7,9,8],[9,8,8,9],[3,19,3,20],[2,22,1,23],[12,2,12,3],[11,4,11,5],[10,7,9,8],[6,14,6,15],[6,15,5,16],[4,18,4,19],[3,21,2,22],[12,3,12,4],[11,5,11,6],[11,6,10,7],[10,8,9,9],[9,9,9,10],[6,16,5,17],[5,17,5,18],[4,20,3,21],[12,4,12,5],[11,6,11,7],[11,7,10,8],[9,10,9,11],[8,12,8,13],[8,13,7,14],[7,15,6,16],[5,19,4,20],[12,5,12,6],[10,9,10,10],[6,17,6,18],[6,18,5,19],[12,6,12,7],[8,15,7,16],[7,17,6,18],[12,7,12,8],[12,8,11,9],[11,9,11,10],[10,12,9,13],[9,13,9,14],[8,16,7,17],[12,8,12,9],[11,11,10,12],[9,15,8,16],[12,9,12,10],[11,12,10,13],[10,14,9,15],[12,10,12,11],[12,11,11,12],[11,13,10,14],[12,11,12,12],[12,12,11,13]];
+  // Os ovos ficam "embaralhados": a página não sabe onde estão, só reconhece quando o radar passa.
+  const OVOS_HASH = ["f4937f9d11e1e8b9798d", "5bca1e531308ed2cb480", "87c969d189e2c2dc1a7c", "8861bf525d96c8f0ba76", "9aa0599061b90d3e49a3"];
+
+  // ================= GEOMETRIA =================
+  const H = Math.sqrt(3) / 2;
+  const pt = (i, j) => [i + j * 0.5, j * H];
+  const muros = MUROS.map(([a, b, c, d]) => [...pt(a, b), ...pt(c, d)]);
+  const pedacos = [];
+  for (const [x1, y1, x2, y2] of muros) {
+    const n = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 0.25));
+    for (let k = 0; k < n; k++) {
+      const a = k / n, b = (k + 1) / n;
+      const ax = x1 + (x2 - x1) * a, ay = y1 + (y2 - y1) * a, bx = x1 + (x2 - x1) * b, by = y1 + (y2 - y1) * b;
+      pedacos.push({ ax, ay, bx, by, mx: (ax + bx) / 2, my: (ay + by) / 2, luz: -1e9 });
+    }
+  }
+  const HEX = [[0, 0], [12, 0], [18, 12 * H], [12, 24 * H], [0, 24 * H], [-6, 12 * H]];
+  const dentroHex = (x, y) => HEX.every(([ax, ay], k) => {
+    const [bx, by] = HEX[(k + 1) % 6];
+    return (bx - ax) * (y - ay) - (by - ay) * (x - ax) >= 0;
+  });
+  const INICIO = { x: 6, y: 12 * H };
+  const ENTRADA = { x: 6.5, y: H / 3 };   // logo abaixo da abertura do topo
+
+  // ================= ESTADO =================
+  const $ = id => document.getElementById(id);
+  const cv = $("radar"), ctx = cv.getContext("2d");
+  let tam = 320, escala = 1, dpr = 1;
+  const jog = { x: INICIO.x, y: INICIO.y };
+  let ovos = [], pegos = new Set(), usuario = null, resolvido = false, enviando = false;
+  let pausado = true, saiu = false;
+  const joy = { x: 0, y: 0 }, teclas = new Set();
+  let t0 = performance.now(), anguloAnt = 0, tAnt = performance.now();
+
+  // ================= TELA =================
+  function ajustar() {
+    tam = Math.max(240, Math.min(window.innerWidth - 32, window.innerHeight - 330, 540));
+    document.documentElement.style.setProperty("--tam", tam + "px");
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = tam * dpr; cv.height = tam * dpr;
+    escala = (tam / 2 - 14) / RAIO_VISAO;
+  }
+  window.addEventListener("resize", ajustar);
+  ajustar();
+
+  const VERDE = (a) => `rgba(57,255,106,${a})`;
+
+  function desenhar(agora) {
+    const c = ctx, R = tam / 2, cx = R, cy = R, r = R - 10;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, tam, tam);
+
+    // moldura e marcações
+    c.fillStyle = "#010a03";
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = VERDE(.9); c.lineWidth = 2;
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = VERDE(.55); c.lineWidth = 1;
+    for (let k = 0; k < 72; k++) {
+      const a = k / 72 * Math.PI * 2, l = k % 6 === 0 ? 8 : 4;
+      c.beginPath();
+      c.moveTo(cx + Math.cos(a) * (r + 2), cy + Math.sin(a) * (r + 2));
+      c.lineTo(cx + Math.cos(a) * (r + 2 + l), cy + Math.sin(a) * (r + 2 + l));
+      c.stroke();
+    }
+
+    c.save();
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.clip();
+
+    c.strokeStyle = VERDE(.16); c.lineWidth = 1;
+    for (const f of [1 / 3, 2 / 3]) { c.beginPath(); c.arc(cx, cy, r * f, 0, Math.PI * 2); c.stroke(); }
+    c.beginPath();
+    for (const a of [Math.PI / 4, -Math.PI / 4]) {
+      c.moveTo(cx - Math.cos(a) * r, cy - Math.sin(a) * r); c.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    }
+    c.stroke();
+
+    // feixe giratório com rastro
+    const ang = ((agora - t0) % VOLTA_MS) / VOLTA_MS * Math.PI * 2;
+    const RASTRO = 1.25, FATIAS = 36;
+    for (let k = 0; k < FATIAS; k++) {
+      const a1 = ang - (k / FATIAS) * RASTRO, a0 = ang - ((k + 1) / FATIAS) * RASTRO;
+      c.fillStyle = VERDE(0.32 * Math.pow(1 - k / FATIAS, 1.6));
+      c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, r, a0, a1 + 0.004); c.closePath(); c.fill();
+    }
+    c.strokeStyle = VERDE(.95); c.lineWidth = 2;
+    c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r); c.stroke();
+
+    // muros: o feixe acende, depois apagam aos poucos; perto do jogador ficam sempre acesos
+    const passou = (a) => {
+      let d = ang - a; d = ((d % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      let p = ang - anguloAnt; p = ((p % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      return d <= p;
+    };
+    const NIVEIS = 10, grupos = Array.from({ length: NIVEIS + 1 }, () => []);
+    const lim = RAIO_VISAO + 0.4;
+    for (const p of pedacos) {
+      const dx = p.mx - jog.x, dy = p.my - jog.y;
+      if (Math.abs(dx) > lim || Math.abs(dy) > lim) continue;
+      const dist = Math.hypot(dx, dy);
+      if (dist > lim) continue;
+      if (dist <= RAIO_VISAO && passou(Math.atan2(dy, dx))) p.luz = agora;
+      const brilhoScan = Math.max(0, 1 - (agora - p.luz) / APAGAR_MS);
+      const brilhoPerto = dist < RAIO_PERTO - 0.35 ? 1 : Math.max(0, (RAIO_PERTO - dist) / 0.35);
+      const b = Math.max(brilhoScan * brilhoScan * 0.95, brilhoPerto * 0.85);
+      if (b < 0.04) continue;
+      grupos[Math.round(b * NIVEIS)].push(p);
+    }
+    c.lineCap = "round";
+    for (let n = 1; n <= NIVEIS; n++) {
+      const g = grupos[n]; if (!g.length) continue;
+      const a = n / NIVEIS;
+      for (const [larg, alfa] of [[0.26, a * 0.18], [0.09, a]]) {
+        c.strokeStyle = VERDE(alfa); c.lineWidth = Math.max(1.2, larg * escala);
+        c.beginPath();
+        for (const p of g) {
+          c.moveTo(cx + (p.ax - jog.x) * escala, cy + (p.ay - jog.y) * escala);
+          c.lineTo(cx + (p.bx - jog.x) * escala, cy + (p.by - jog.y) * escala);
+        }
+        c.stroke();
+      }
+    }
+
+    // ovos vermelhos: só o radar (ou estar bem perto) mostra
+    for (const o of ovos) {
+      if (pegos.has(o.id)) continue;
+      const dx = o.x - jog.x, dy = o.y - jog.y, dist = Math.hypot(dx, dy);
+      if (dist > lim) continue;
+      if (dist <= RAIO_VISAO && passou(Math.atan2(dy, dx))) o.luz = agora;
+      const b = Math.max(Math.max(0, 1 - (agora - o.luz) / APAGAR_MS), dist < RAIO_PERTO ? 1 - dist / RAIO_PERTO : 0);
+      if (b < 0.04) continue;
+      const sx = cx + dx * escala, sy = cy + dy * escala;
+      c.fillStyle = `rgba(255,59,59,${b * 0.25})`;
+      c.beginPath(); c.arc(sx, sy, 0.32 * escala, 0, Math.PI * 2); c.fill();
+      c.fillStyle = `rgba(255,70,70,${b})`;
+      c.beginPath(); c.ellipse(sx, sy, 0.11 * escala, 0.14 * escala, 0, 0, Math.PI * 2); c.fill();
+    }
+
+    // jogador
+    const pulso = 0.5 + 0.5 * Math.sin(agora / 250);
+    c.strokeStyle = VERDE(0.35 + 0.3 * pulso); c.lineWidth = 1.5;
+    c.beginPath(); c.arc(cx, cy, (RAIO_JOGADOR + 0.08 + 0.06 * pulso) * escala, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = "#b9ffcb";
+    c.beginPath(); c.arc(cx, cy, RAIO_JOGADOR * escala, 0, Math.PI * 2); c.fill();
+
+    c.restore();
+    anguloAnt = ang;
+  }
+
+  // ================= MOVIMENTO E COLISÃO =================
+  function empurrar() {
+    for (let it = 0; it < 3; it++) {
+      for (const [x1, y1, x2, y2] of muros) {
+        if (Math.min(x1, x2) - COLISAO > jog.x || Math.max(x1, x2) + COLISAO < jog.x ||
+            Math.min(y1, y2) - COLISAO > jog.y || Math.max(y1, y2) + COLISAO < jog.y) continue;
+        const vx = x2 - x1, vy = y2 - y1, l2 = vx * vx + vy * vy;
+        const t = Math.max(0, Math.min(1, ((jog.x - x1) * vx + (jog.y - y1) * vy) / l2));
+        const px = x1 + vx * t, py = y1 + vy * t;
+        const dx = jog.x - px, dy = jog.y - py, d = Math.hypot(dx, dy);
+        if (d < COLISAO && d > 1e-9) { jog.x = px + dx / d * COLISAO; jog.y = py + dy / d * COLISAO; }
+      }
+    }
+  }
+
+  function mover(dt) {
+    let vx = joy.x, vy = joy.y;
+    const kx = (teclas.has("ArrowRight") || teclas.has("d") ? 1 : 0) - (teclas.has("ArrowLeft") || teclas.has("a") ? 1 : 0);
+    const ky = (teclas.has("ArrowDown") || teclas.has("s") ? 1 : 0) - (teclas.has("ArrowUp") || teclas.has("w") ? 1 : 0);
+    if (kx || ky) { const n = Math.hypot(kx, ky); vx = kx / n; vy = ky / n; }
+    if (!vx && !vy) return;
+    const passo = VELOCIDADE * dt, n = Math.ceil(passo / 0.05);
+    for (let k = 0; k < n; k++) { jog.x += vx * passo / n; jog.y += vy * passo / n; empurrar(); }
+    if (!saiu && jog.y < -0.35) { saiu = true; abrir("pSaida"); }
+    pegarOvos();
+  }
+
+  // ================= OVOS =================
+  async function sha(texto) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 20);
+  }
+
+  async function prepararOvos() {
+    const celulas = [];
+    for (let j = 0; j < 24; j++) for (let i = -30; i < 30; i++)
+      [[1 / 3, 1 / 3], [2 / 3, 2 / 3]].forEach(([fx, fy], k) => {
+        const x = (i + fx) + (j + fy) * 0.5, y = (j + fy) * H;
+        if (dentroHex(x, y)) celulas.push({ id: `${j}.${i}.${k}`, x, y });
+      });
+    const hs = await Promise.all(celulas.map(c => sha(SLUG + ":" + c.id)));
+    ovos = celulas.filter((c, n) => OVOS_HASH.includes(hs[n])).map(c => ({ ...c, luz: -1e9 }));
+  }
+
+  const chaveLocal = () => `radar-ovos:${usuario?.id || "anon"}`;
+  function salvar() { try { localStorage.setItem(chaveLocal(), JSON.stringify([...pegos])); } catch {} }
+  function carregar() {
+    try { const l = JSON.parse(localStorage.getItem(chaveLocal()) || "[]"); l.forEach(id => ovos.some(o => o.id === id) && pegos.add(id)); } catch {}
+  }
+
+  function atualizarSinais() {
+    const el = $("sinais");
+    el.textContent = `◆ ${pegos.size}/${ovos.length}`;
+    el.classList.toggle("on", pegos.size > 0);
+    $("bTransmissao").hidden = !(resolvido || (ovos.length && pegos.size === ovos.length));
+  }
+
+  function pegarOvos() {
+    for (const o of ovos) {
+      if (pegos.has(o.id)) continue;
+      if (Math.hypot(o.x - jog.x, o.y - jog.y) < PEGAR_OVO) {
+        pegos.add(o.id); salvar(); atualizarSinais();
+        avisar("SINAL CAPTURADO", 1600);
+        if (pegos.size === ovos.length) enviar();
+      }
+    }
+  }
+
+  async function enviar() {
+    if (enviando) return;
+    enviando = true;
+    mostrarTransmissao("RECEBENDO...", "", null, false);
+    try {
+      const resposta = [...pegos].sort().join("-");
+      const r = await Desafio.responder(SLUG, resposta);
+      if (r.status === "certo") {
+        resolvido = true; atualizarSinais();
+        mostrarTransmissao("TRANSMISSAO RECEBIDA", r.recompensa_texto, r.recompensa_imagem, true);
+      } else if (r.status === "aguarde") {
+        mostrarTransmissao("SINAL OCUPADO", "Aguarde um minuto e toque em VER TRANSMISSAO.", null, false);
+      } else if (r.status === "invalido") {
+        mostrarTransmissao("SINAL INDISPONIVEL", "Este radar ainda não está transmitindo.", null, false);
+      } else {
+        mostrarTransmissao("SINAL CORROMPIDO", "Algo não bateu. Tente de novo.", null, false);
+      }
+    } catch {
+      mostrarTransmissao("FALHA NA CONEXAO", "Verifique a internet e toque em VER TRANSMISSAO.", null, false);
+    } finally { enviando = false; }
+  }
+
+  async function mostrarTransmissao(titulo, texto, imagem, rico) {
+    $("tTitulo").textContent = titulo;
+    $("tTexto").innerHTML = rico ? Desafio.textoRecompensa(texto) : "";
+    if (!rico) $("tTexto").textContent = texto || "";
+    const img = $("tImagem"); img.hidden = true;
+    abrir("pTransmissao");
+    if (imagem) { const url = await Desafio.imagemRecompensa(imagem); if (url) { img.src = url; img.hidden = false; } }
+  }
+
+  // ================= PAINÉIS E AVISOS =================
+  function abrir(id) {
+    document.querySelectorAll(".painel").forEach(p => p.classList.toggle("on", p.id === id));
+    pausado = true; joy.x = joy.y = 0; centralizarKnob();
+  }
+  function fechar() { document.querySelectorAll(".painel").forEach(p => p.classList.remove("on")); pausado = false; }
+  let avisoTimer = 0;
+  function avisar(txt, ms) {
+    const el = $("estado"); el.textContent = txt; el.classList.add("piscar");
+    clearTimeout(avisoTimer);
+    if (ms) avisoTimer = setTimeout(() => { el.textContent = "VARREDURA ATIVA"; el.classList.remove("piscar"); }, ms);
+  }
+
+  $("bVoltarLab").onclick = () => { jog.x = ENTRADA.x; jog.y = ENTRADA.y; saiu = false; fechar(); };
+  $("bFechar").onclick = fechar;
+  $("bTransmissao").onclick = () => enviar();
+
+  // ================= JOYSTICK =================
+  const base = $("joy"), knob = $("knob");
+  let toque = null;
+  function centralizarKnob() { knob.style.transform = ""; }
+  function lerJoy(e) {
+    const r = base.getBoundingClientRect(), max = r.width / 2 - 20;
+    let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    const d = Math.hypot(dx, dy);
+    if (d > max) { dx = dx / d * max; dy = dy / d * max; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    const m = Math.min(1, d / max);
+    if (m < 0.12) { joy.x = joy.y = 0; return; }
+    joy.x = dx / Math.hypot(dx, dy) * m; joy.y = dy / Math.hypot(dx, dy) * m;
+  }
+  base.addEventListener("pointerdown", e => { if (pausado) return; toque = e.pointerId; try { base.setPointerCapture(toque); } catch {} lerJoy(e); e.preventDefault(); });
+  base.addEventListener("pointermove", e => { if (e.pointerId === toque) lerJoy(e); });
+  const soltar = e => { if (e.pointerId !== toque) return; toque = null; joy.x = joy.y = 0; centralizarKnob(); };
+  base.addEventListener("pointerup", soltar);
+  base.addEventListener("pointercancel", soltar);
+
+  const TECLAS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"];
+  window.addEventListener("keydown", e => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; if (TECLAS.includes(k)) { teclas.add(k); e.preventDefault(); } });
+  window.addEventListener("keyup", e => { const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; teclas.delete(k); });
+  window.addEventListener("blur", () => teclas.clear());
+
+  // ================= LAÇO PRINCIPAL =================
+  function quadro(agora) {
+    const dt = Math.min(0.05, (agora - tAnt) / 1000); tAnt = agora;
+    if (!pausado) mover(dt);
+    desenhar(agora);
+    requestAnimationFrame(quadro);
+  }
+  requestAnimationFrame(quadro);
+
+  // ================= INÍCIO =================
+  (async () => {
+    try {
+      const sessao = await Desafio.sessao();
+      if (!sessao) { avisar("SEM ACESSO"); abrir("pAcesso"); return; }
+      usuario = sessao.user;
+      await prepararOvos();
+      carregar();
+      try {
+        const st = await Desafio.status(SLUG);
+        resolvido = !!st.resolvido;
+        if (resolvido) ovos.forEach(o => pegos.add(o.id));
+      } catch { /* sem conexão: dá para jogar mesmo assim */ }
+      atualizarSinais();
+      avisar("VARREDURA ATIVA");
+      $("estado").classList.remove("piscar");
+      fechar();
+    } catch {
+      avisar("FALHA NA CONEXÃO");
+    }
+  })();
+})();
+</script>
+</body>
+</html>
