@@ -163,6 +163,9 @@
     .brilho-aura, .brilho-reflexo, .tag-aura, .tag-reflexo::after,
     .brilho-estrelas::before, .brilho-estrelas::after, .tag-estrelas::before, .tag-estrelas::after { animation: none; }
   }
+  /* Texto secreto: [[segredo:texto]] fica borrado até o jogador tocar */
+  .segredo { filter: blur(5px); cursor: pointer; transition: filter .25s; border-radius: 4px; background: color-mix(in srgb, var(--line) 60%, transparent); }
+  .segredo.revelado { filter: none; background: none; cursor: auto; }
   .cor-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
 
   /* Ponto vermelho de "novidade" */
@@ -623,8 +626,51 @@
     return `<span class="tag${brilho}"${estilo}>${info.icone ? esc(info.icone) + " " : ""}${esc(rotulo(c))}</span>`;
   }
 
-  // Texto com palavras brilhantes: [[palavra]] usa o BRILHO_PADRAO;
-  // [[aura:palavra]], [[reflexo:palavra]] e [[estrelas:palavra]] escolhem o estilo.
+  // Formatação dentro dos textos: [[estilos:texto]]
+  //   [[palavra]]                    → brilho padrão (BRILHO_PADRAO)
+  //   brilhos: aura, reflexo, estrelas
+  //   forma:   negrito, italico, sublinhado, riscado, grande, pequeno, segredo
+  //   cores:   nomes de CORES_TEXTO abaixo ou código, ex.: #ff8800
+  //   dá para combinar separando por espaço: [[vermelho negrito aura:CUIDADO]]
+  const CORES_TEXTO = {
+    vermelho: "#ff6b5e", laranja: "#ff9f43", amarelo: "#ffd54a", verde: "#5cd67e", azul: "#5aa9ff",
+    ciano: "#4fd8e8", roxo: "#b388ff", rosa: "#ff7eb6", marrom: "#c98a55", cinza: "#a8a29a",
+    branco: "#ffffff", dourado: "#f2c14e",
+  };
+  const FORMAS = ["negrito", "italico", "sublinhado", "riscado", "grande", "pequeno", "segredo"];
+  const semAcento = t => t.normalize("NFD").replace(/\p{M}/gu, "");   // tira acentos: "itálico" → "italico"
+
+  // Lê os estilos antes dos ":"; devolve null se algum não for um estilo conhecido
+  function lerEstilos(prefixo) {
+    const tokens = semAcento(prefixo.trim().toLowerCase()).split(/\s+/);
+    const est = { brilho: null, cor: null, formas: new Set() };
+    for (const t of tokens) {
+      if (BRILHOS.includes(t)) est.brilho = est.brilho || t;
+      else if (FORMAS.includes(t)) est.formas.add(t);
+      else if (CORES_TEXTO[t]) est.cor = CORES_TEXTO[t];
+      else if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(t)) est.cor = t;
+      else return null;
+    }
+    return est;
+  }
+
+  function aplicarEstilos(est, texto) {
+    const classes = [], estilo = [];
+    if (est.brilho) classes.push(`brilho-${est.brilho}`);
+    if (est.cor) estilo.push(est.brilho ? `--gold:${est.cor}` : `color:${est.cor}`);
+    const f = est.formas;
+    if (f.has("negrito")) estilo.push("font-weight:700");
+    if (f.has("italico")) estilo.push("font-style:italic");
+    const linhas = [f.has("sublinhado") && "underline", f.has("riscado") && "line-through"].filter(Boolean);
+    if (linhas.length) estilo.push(`text-decoration:${linhas.join(" ")}`);
+    if (f.has("grande")) estilo.push("font-size:1.35em");
+    if (f.has("pequeno")) estilo.push("font-size:.8em");
+    if (f.has("segredo")) classes.push("segredo");
+    const attrs = (classes.length ? ` class="${classes.join(" ")}"` : "") + (estilo.length ? ` style="${estilo.join(";")}"` : "")
+      + (f.has("segredo") ? ` title="Toque para revelar"` : "");
+    return `<span${attrs}>${texto}</span>`;
+  }
+
   // O texto é protegido (esc) ANTES, então só os colchetes viram efeito.
   function textoRico(s) {
     const padrao = BRILHOS.includes(BRILHO_PADRAO) ? BRILHO_PADRAO : "aura";
@@ -636,8 +682,12 @@
         const link = fim ? url.slice(0, -fim.length) : url;
         return `<a class="link-auto" href="${link}" target="_blank" rel="noopener noreferrer">${link}</a>${fim}`;
       })
-      .replace(/\[\[(?:(aura|reflexo|estrelas):)?([^\]]+?)\]\]/gi,
-        (_, tipo, palavra) => `<span class="brilho-${(tipo || padrao).toLowerCase()}">${palavra}</span>`);
+      .replace(/\[\[([^\]]+?)\]\]/g, (_, dentro) => {
+        const i = dentro.indexOf(":");
+        const est = i > 0 ? lerEstilos(dentro.slice(0, i)) : null;
+        if (est && dentro.slice(i + 1).trim()) return aplicarEstilos(est, dentro.slice(i + 1));
+        return `<span class="brilho-${padrao}">${dentro}</span>`;   // sem estilo: brilho padrão
+      });
   }
   function etiquetas(o) {
     const lista = opcoes(o.categorias || [], () => 0);   // sem repetidos, na ordem cadastrada
@@ -655,6 +705,14 @@
     return m ? m[1] : null;
   }
   const temPistaNova = () => pistas.some(p => !p.vista);
+
+  // Toque num [[segredo:...]] revela o texto (e não abre a pista)
+  document.addEventListener("click", e => {
+    const seg = e.target.closest(".segredo:not(.revelado)");
+    if (!seg) return;
+    seg.classList.add("revelado");
+    e.stopPropagation(); e.preventDefault();
+  }, true);
 
   // Data em que a pista foi postada + etiquetas de teste (só aparecem para contas debugger)
   function metaPista(p) {
