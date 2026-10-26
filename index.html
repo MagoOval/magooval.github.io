@@ -289,6 +289,19 @@
   @media (min-width: 760px) {
     .detalhe { grid-template-columns: minmax(260px, 340px) 1fr; padding: 28px; align-items: start; }
   }
+  .contagio {
+    margin: 4px 0 18px; padding: 14px 16px; border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--ok) 55%, transparent);
+    background: color-mix(in srgb, var(--ok) 9%, var(--card));
+  }
+  .contagio h3 { margin: 0 0 8px; color: var(--ok); }
+  .contagio p { margin: 0 0 8px; }
+  .contagio .sub { margin: 6px 0 0; font-size: .9rem; color: var(--muted); }
+  .chave-zumbi { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .chave-zumbi code {
+    font-size: 1.15rem; font-weight: 700; letter-spacing: .04em; padding: 6px 12px; border-radius: 8px;
+    background: var(--locked); color: var(--ok); border: 1px dashed color-mix(in srgb, var(--ok) 60%, transparent);
+  }
   .det-ranking { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 20px; }
   .det-ranking .btn { display: block; max-width: 360px; margin: 0 auto; }
   .ranking { list-style: none; margin: 0 0 20px; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
@@ -994,7 +1007,8 @@
         if (error) throw error;
         if (data.status === "novo") {
           sig.classList.add("sucesso");
-          m.className = "msg ok"; m.textContent = "O feitiço funcionou! Um ovo surgiu…";
+          m.className = "msg ok";
+          m.textContent = data.zumbi ? "🧟 Você foi infectado… e um ovo surgiu!" : "O feitiço funcionou! Um ovo surgiu…";
           await Promise.all([carregarOvos(), esperar(900)]);
           return telaDetalhe(ovos.find(o => o.numero === data.numero), true);
         }
@@ -1002,6 +1016,10 @@
           m.textContent = "Este ovo já atendeu ao seu chamado antes.";
         } else if (data.status === "aguarde") {
           m.className = "msg err"; m.textContent = "A magia precisa descansar. Espere um minuto.";
+        } else if (data.status === "zumbi_propria") {
+          m.textContent = "🧟 Essa é a sua própria chave de contágio. Passe para outra pessoa!";
+        } else if (data.status === "zumbi_esgotada") {
+          m.className = "msg err"; m.textContent = `🧟 Essa chave já infectou ${data.usos_max || 5} pessoas… e morreu.`;
         } else {
           void sig.getBoundingClientRect();
           sig.classList.add("falhou");
@@ -1103,6 +1121,7 @@
         <div>
           <p class="desc">${textoRico(o.descricao)}</p>
           <p class="found-on">Você encontrou em ${dataHora(o.encontrado_em)}</p>
+          <div id="zumbi"></div>
         </div>
         <div class="det-ranking">
           <h3>🏆 Quem encontrou primeiro</h3>
@@ -1113,6 +1132,42 @@
     ligarTopo();
     document.getElementById("ok").onclick = () => { aba = "ovos"; render(); };
     carregarRanking(o.numero);
+    carregarContagio(o.numero);
+  }
+
+  // Ovo Zumbi: mostra a chave de contágio da pessoa (só aparece em ovos zumbi)
+  async function carregarContagio(numero) {
+    const alvo = document.getElementById("zumbi");
+    try {
+      const { data, error } = await sb.rpc("meu_contagio", { p_numero: numero });
+      if (error || !data?.zumbi || !document.body.contains(alvo)) return;
+      const restam = Math.max(0, data.usos_max - data.usos);
+      const origem = data.paciente_zero || !data.infectado_por
+        ? "Você foi infectado pelo <strong>Paciente Zero</strong>."
+        : `Você foi infectado por <strong>${esc(data.infectado_por)}</strong>.`;
+      const vitimas = data.infectados.length
+        ? `Você já infectou <strong>${data.infectados.length}</strong>: ${data.infectados.map(esc).join(", ")}.`
+        : "Você ainda não infectou ninguém.";
+      alvo.innerHTML = `
+        <div class="contagio">
+          <h3>🧟 Contágio</h3>
+          ${restam > 0 ? `
+            <p>Sua chave de contágio:</p>
+            <div class="chave-zumbi">
+              <code>${esc(data.chave)}</code>
+              <button class="btn btn-compacto" type="button" id="copiarZumbi">Copiar</button>
+            </div>
+            <p class="sub">Restam <strong>${restam}</strong> de ${data.usos_max} infecções. Cada pessoa nova que usar gasta uma.</p>`
+          : `<p>Sua chave <code>${esc(data.chave)}</code> já infectou ${data.usos_max} pessoas e morreu.</p>`}
+          <p class="sub">${origem} ${vitimas}</p>
+        </div>`;
+      const b = document.getElementById("copiarZumbi");
+      if (b) b.onclick = async () => {
+        try { await navigator.clipboard.writeText(data.chave); b.textContent = "Copiada!"; }
+        catch { b.textContent = "Selecione e copie"; }
+        setTimeout(() => { b.textContent = "Copiar"; }, 1800);
+      };
+    } catch { /* sem contágio */ }
   }
 
   async function carregarRanking(numero) {
