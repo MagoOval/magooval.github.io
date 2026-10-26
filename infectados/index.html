@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Quarentena</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☣️%3C/text%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="../desafio.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fundo: #0b0d0a;
+    --cartao: #141912;
+    --linha: #26301f;
+    --texto: #e6eddc;
+    --apagado: #8f9a85;
+    --toxico: #8dff4f;
+    --toxico-escuro: #3f7a1f;
+    --alerta: #f4d03f;
+    --morto: #6d6d6d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--fundo); color: var(--texto);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background-image: radial-gradient(ellipse at top, rgba(141,255,79,.10), transparent 60%);
+  }
+  .fita {
+    height: 22px;
+    background: repeating-linear-gradient(-45deg, var(--alerta) 0 18px, #111 18px 36px);
+    box-shadow: 0 2px 10px rgba(0,0,0,.6);
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 18px 16px 48px; }
+  .voltar { color: var(--apagado); text-decoration: none; font-family: "Special Elite", monospace; }
+  .voltar:hover { color: var(--toxico); }
+  h1 {
+    margin: 14px 0 0; text-align: center; font: 400 clamp(2.6rem, 12vw, 4.4rem)/1 "Creepster", cursive;
+    color: var(--toxico); letter-spacing: .06em; text-shadow: 0 0 14px rgba(141,255,79,.45);
+  }
+  .sub { text-align: center; margin: 6px 0 22px; font-family: "Special Elite", monospace; color: var(--apagado); }
+  .ovo { background: var(--cartao); border: 1px solid var(--linha); border-radius: 14px; padding: 16px; margin-bottom: 22px; }
+  .ovo h2 { margin: 0 0 4px; font: 400 1.25rem "Special Elite", monospace; color: var(--toxico); }
+  .numeros { color: var(--apagado); font-size: .95rem; margin: 0 0 12px; }
+  .numeros strong { color: var(--texto); }
+  .situacao {
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-family: "Special Elite", monospace;
+    border: 1px dashed var(--linha);
+  }
+  .situacao.infectado { border-color: var(--toxico-escuro); color: var(--toxico); background: rgba(141,255,79,.06); }
+  .controles { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .controles input[type=search] {
+    flex: 1 1 220px; min-width: 0; padding: 10px 12px; border-radius: 10px; font: inherit;
+    background: #0d110b; color: var(--texto); border: 1px solid var(--linha);
+  }
+  .controles input[type=search]:focus { outline: 2px solid var(--toxico-escuro); }
+  .controles label { display: flex; align-items: center; gap: 6px; color: var(--apagado); cursor: pointer; user-select: none; }
+  .controles input[type=checkbox] { accent-color: var(--toxico); width: 18px; height: 18px; }
+  ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  li {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center;
+    padding: 10px 12px; border-radius: 10px; background: #0f130d; border: 1px solid var(--linha);
+  }
+  li.voce { border-color: var(--toxico-escuro); box-shadow: 0 0 0 1px var(--toxico-escuro) inset; }
+  .pos { font-family: "Special Elite", monospace; color: var(--apagado); min-width: 2.2em; }
+  .quem strong { font-size: 1.05rem; }
+  .tag-voce { font-size: .72rem; padding: 1px 8px; border-radius: 99px; background: var(--toxico); color: #10200a; font-weight: 700; margin-left: 6px; vertical-align: 2px; }
+  .detalhe { color: var(--apagado); font-size: .88rem; }
+  .estado { font-size: .85rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  .estado.vivo { color: #10200a; background: var(--toxico); }
+  .estado.morto { color: #ddd; background: var(--morto); }
+  .vazio { text-align: center; color: var(--apagado); font-family: "Special Elite", monospace; padding: 18px 6px; }
+  .rodape { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--apagado); font-size: .85rem; margin-top: 6px; }
+  button {
+    font: inherit; color: var(--toxico); background: none; border: 1px solid var(--toxico-escuro);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  }
+  button:hover { background: rgba(141,255,79,.08); }
+  @media (max-width: 520px) {
+    li { grid-template-columns: auto 1fr; }
+    .estado { grid-column: 2; justify-self: start; }
+  }
+</style>
+</head>
+<body>
+  <div class="fita"></div>
+  <main>
+    <a class="voltar" href="../">&lt; voltar ao jogo</a>
+    <h1>QUARENTENA</h1>
+    <p class="sub">Registro oficial de infectados</p>
+    <div id="conteudo"><p class="vazio">Abrindo os arquivos…</p></div>
+    <div class="rodape">
+      <span id="atualizado"></span>
+      <button type="button" id="atualizar">Atualizar</button>
+    </div>
+  </main>
+  <div class="fita"></div>
+
+<script>
+(() => {
+  const alvo = document.getElementById("conteudo");
+  const ovoPedido = Number(new URLSearchParams(location.search).get("ovo")) || null;   // ?ovo=20 (opcional)
+  let dados = [], busca = "", soContagiosos = false;
+
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const semAcento = t => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  const quando = d => new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+  function desenhar() {
+    // se a pessoa está digitando na busca, mantém o cursor lá depois de redesenhar
+    const ativo = document.activeElement;
+    const cursor = ativo && ativo.matches("[data-busca]") ? ativo.selectionStart : null;
+    if (!dados.length) {
+      alvo.innerHTML = `<p class="vazio">Nenhum surto registrado. A cidade dorme tranquila… por enquanto.</p>`;
+      return;
+    }
+    alvo.innerHTML = dados.map(o => {
+      const todos = o.infectados;
+      const vivos = todos.filter(i => i.restam > 0).length;
+      const lista = todos
+        .map((i, n) => ({ ...i, pos: n + 1 }))
+        .filter(i => !busca || semAcento(i.nome).includes(busca) || semAcento(i.por || "paciente zero").includes(busca))
+        .filter(i => !soContagiosos || i.restam > 0);
+      return `
+        <section class="ovo">
+          <h2>☣ ${o.nome ? esc(o.nome) : `Ovo #${o.numero}`}</h2>
+          <p class="numeros"><strong>${todos.length}</strong> infectado${todos.length === 1 ? "" : "s"} ·
+             <strong>${vivos}</strong> ainda contagioso${vivos === 1 ? "" : "s"}</p>
+          <div class="situacao ${o.voce_infectado ? "infectado" : ""}">
+            ${o.voce_infectado ? "🧟 Você está infectado. Sua chave está na tela do ovo, no jogo."
+                               : "🙂 Você ainda está são… procure um dos contagiosos abaixo."}
+          </div>
+          ${todos.length ? `
+            <div class="controles">
+              <input type="search" placeholder="Procurar nome…" value="${esc(busca)}" data-busca>
+              <label><input type="checkbox" data-filtro ${soContagiosos ? "checked" : ""}> Só contagiosos</label>
+            </div>` : ""}
+          ${lista.length ? `<ol>${lista.map(i => `
+            <li class="${i.voce ? "voce" : ""}">
+              <span class="pos">#${i.pos}</span>
+              <span class="quem">
+                <strong>${esc(i.nome)}</strong>${i.voce ? `<span class="tag-voce">você</span>` : ""}
+                <div class="detalhe">infectado por ${i.por ? esc(i.por) : "Paciente Zero"} · ${quando(i.em)}</div>
+              </span>
+              ${i.restam > 0
+                ? `<span class="estado vivo">🧟 restam ${i.restam}/${i.usos_max}</span>`
+                : `<span class="estado morto">💀 esgotado</span>`}
+            </li>`).join("")}</ol>`
+            : `<p class="vazio">${todos.length ? "Ninguém encontrado com esse filtro." : "Ninguém foi infectado ainda."}</p>`}
+        </section>`;
+    }).join("");
+
+    alvo.querySelectorAll("[data-busca]").forEach(inp => inp.oninput = () => { busca = semAcento(inp.value.trim()); desenhar(); });
+    const campo = alvo.querySelector("[data-busca]");
+    if (cursor !== null && campo) { campo.focus(); campo.setSelectionRange(cursor, cursor); }
+    alvo.querySelectorAll("[data-filtro]").forEach(ch => ch.onchange = () => { soContagiosos = ch.checked; desenhar(); });
+  }
+
+  async function carregar() {
+    try {
+      const { data, error } = await Desafio.sb.rpc("lista_infectados", { p_numero: ovoPedido });
+      if (error) throw error;
+      dados = data || [];
+      desenhar();
+      document.getElementById("atualizado").textContent =
+        "Atualizado às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      alvo.innerHTML = `<p class="vazio">Não foi possível abrir os arquivos da quarentena. Tente atualizar.</p>`;
+    }
+  }
+
+  document.getElementById("atualizar").onclick = carregar;
+
+  (async () => {
+    const sessao = await Desafio.sessao();
+    if (!sessao) {
+      alvo.innerHTML = `<p class="vazio">ACESSO RESTRITO.<br>Entre no Caça aos Ovos primeiro.<br><br><a href="../"><button type="button">Entrar</button></a></p>`;
+      document.getElementById("atualizar").hidden = true;
+      return;
+    }
+    await carregar();
+    setInterval(carregar, 30000);   // atualiza sozinho a cada 30 segundos
+  })();
+})();
+</script>
+</body>
+</html>
