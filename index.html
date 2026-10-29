@@ -343,7 +343,7 @@
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --parede-opacidade: .2; } }
   :root[data-theme="dark"] { --parede-opacidade: .2; }
   body { position: relative; }
-  body.com-parede::before, .rasgo-pagina.com-parede::before {
+  body.com-parede::before {
     content: ""; position: absolute; left: 0; right: 0; top: var(--corte, 0px); bottom: 0; z-index: 0;
     pointer-events: none; background-image: var(--parede); background-size: 480px 480px;
     opacity: var(--parede-opacidade);
@@ -505,41 +505,19 @@
     .sigilo .sg-anel, .sigilo .sg-estrela, .sigilo .sg-centro,
     .sigilo.conjurando, .sigilo.sucesso, .sigilo.falhou { animation: none; }
   }
-  /* ---------- Portal: senha que leva para outro site (a tela rasga devagar) ---------- */
-  .rasgo { position: fixed; inset: 0; z-index: 9999; overflow: hidden; background: #000; }
-  .rasgo-lado { position: absolute; inset: 0; z-index: 1; filter: drop-shadow(0 0 1px #e9dcc0); }
-  .rasgo-lado.esq { transform-origin: 0 100%; }
-  .rasgo-lado.dir { transform-origin: 100% 100%; }
-  .rasgo.rachando .rasgo-lado { animation: tremer 2.6s linear; }
-  /* 1º as metades descolam um pouquinho… */
-  .rasgo.abrindo .rasgo-lado { transition: transform 1.3s ease-out; }
-  .rasgo.abrindo .rasgo-lado.esq { transform: translateX(-1.2vw) rotate(-1deg); }
-  .rasgo.abrindo .rasgo-lado.dir { transform: translateX(1.2vw) rotate(1deg); }
-  /* …e depois se separam de vez, devagar no começo */
-  .rasgo.separando .rasgo-lado { transition: transform 2.4s cubic-bezier(.55, 0, .9, .45); }
-  .rasgo.separando .rasgo-lado.esq { transform: translateX(-75vw) rotate(-9deg); }
-  .rasgo.separando .rasgo-lado.dir { transform: translateX(75vw) rotate(9deg); }
-  .rasgo-recorte { position: absolute; inset: 0; overflow: hidden; background: var(--bg); }
-  .rasgo-pagina { position: absolute; left: 0; }
-  .rasgo-fenda {
-    position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;
-    filter: drop-shadow(0 0 1px #e9dcc0);
-  }
-  .rasgo-fenda polyline { fill: none; stroke: #000; stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; }
-  .rasgo.rachando .rasgo-fenda polyline { animation: fenda 2.6s linear forwards; }
-  .rasgo.abrindo .rasgo-fenda { opacity: 0; transition: opacity 1s; }
-  /* a rachadura desce aos trancos: anda, para, anda… */
-  @keyframes fenda {
-    0% { stroke-dashoffset: 1; }    12% { stroke-dashoffset: .9; }  24% { stroke-dashoffset: .89; }
-    34% { stroke-dashoffset: .7; }  48% { stroke-dashoffset: .68; } 58% { stroke-dashoffset: .45; }
-    70% { stroke-dashoffset: .44; } 82% { stroke-dashoffset: .2; }  90% { stroke-dashoffset: .19; }
-    100% { stroke-dashoffset: 0; }
-  }
-  @keyframes tremer {
-    0%, 10%, 26%, 32%, 50%, 56%, 72%, 80%, 92%, 100% { transform: none; }
-    6%  { transform: translate(-2px, 1px); }  30% { transform: translate(2px, -1px); }
-    53% { transform: translate(-3px, 0); }    76% { transform: translate(3px, 1px); }
-    96% { transform: translate(-3px, -1px); }
+  /* ---------- Portal: senha que leva para outro site (uma fenda vermelha rasga a tela) ---------- */
+  .rasgo { position: fixed; inset: 0; z-index: 9999; overflow: hidden; background: transparent; }
+  .rasgo.preto { background: #000; transition: background .6s; }
+  .rasgo-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .rasgo .fenda-fundo { fill: #000; }
+  .rasgo .fenda-brilho { fill: none; stroke: #ff1028; stroke-width: 9; stroke-linejoin: round; opacity: .55; }
+  .rasgo .fenda-borda { fill: none; stroke: #ff6a55; stroke-width: 2.5; stroke-linejoin: round; }
+  .rasgo .galho { fill: none; stroke: #e3192c; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+  .rasgo.tranco .rasgo-svg { filter: brightness(1.9); }
+  /* nos trancos a página "falha" para o lado, com as cores separadas */
+  body.rasgo-falha .papel-sombra, body.rasgo-falha .app {
+    transform: translateX(var(--falha, 4px));
+    filter: drop-shadow(5px 0 0 rgba(255, 0, 40, .7)) drop-shadow(-5px 0 0 rgba(0, 255, 230, .4));
   }
 </style>
 <style id="textura-pedra">
@@ -1088,68 +1066,133 @@
   }
 
   // ---- Portal: senha que leva para outro site ----
-  // A tela é copiada em duas metades. Uma rachadura desce devagar, aos trancos,
-  // as metades descolam e depois se separam, deixando só o preto; então o site abre na mesma aba.
+  // Uma fenda vertical de bordas vermelhas brilhantes rasga a tela aos trancos, solta rachaduras
+  // para os lados e vai alargando até engolir tudo; com a tela preta, o site abre na mesma aba.
   function abrirPortal(endereco) {
     let destino;
     try { destino = new URL(endereco, location.href); } catch { return; }
     if (!/^https?:$/.test(destino.protocol)) return;
-    const ir = () => location.assign(destino.href);
+    let foi = false;
+    const ir = () => { if (!foi) { foi = true; location.assign(destino.href); } };
 
     const fundo = document.createElement("div");
     fundo.className = "rasgo";
-    if (reduzirMovimento()) {
-      document.body.append(fundo);
-      return setTimeout(ir, 1000);
-    }
-
-    // linha do rasgo, de cima a baixo, perto do meio da tela (em %)
-    const pts = [];
-    for (let y = -2; y < 100; y += 3 + Math.random() * 4) pts.push([50 + (Math.random() - .5) * 9, y]);
-    pts.push([50 + (Math.random() - .5) * 9, 102]);
-    const linha = pts.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(", ");
-
-    // cópia da tela como ela está agora (cabeçalho + conteúdo, na mesma rolagem)
-    const copiarTela = () => {
-      const pag = document.createElement("div");
-      pag.className = "rasgo-pagina" + (document.body.classList.contains("com-parede") ? " com-parede" : "");
-      pag.style.cssText = `top:${-scrollY}px; width:${document.documentElement.clientWidth}px;` +
-                          `min-height:${document.documentElement.scrollHeight}px`;
-      for (const el of [document.querySelector("header.papel-sombra"), app]) {
-        const c = el.cloneNode(true);
-        const orig = el.querySelectorAll("input"), novos = c.querySelectorAll("input");
-        novos.forEach((inp, i) => { inp.value = orig[i].value; });
-        c.querySelectorAll("[id]").forEach(n => n.removeAttribute("id"));
-        c.querySelectorAll("[autofocus]").forEach(n => n.removeAttribute("autofocus"));
-        pag.append(c);
-      }
-      return pag;
-    };
-    for (const lado of ["esq", "dir"]) {
-      const metade = document.createElement("div");
-      metade.className = "rasgo-lado " + lado;
-      const recorte = document.createElement("div");
-      recorte.className = "rasgo-recorte";
-      recorte.style.clipPath = lado === "esq" ? `polygon(0% -2%, ${linha}, 0% 102%)`
-                                              : `polygon(${linha}, 100% 102%, 100% -2%)`;
-      recorte.append(copiarTela());
-      metade.append(recorte);
-      fundo.append(metade);
-    }
-    fundo.insertAdjacentHTML("beforeend",
-      `<svg class="rasgo-fenda" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-         <polyline pathLength="1" vector-effect="non-scaling-stroke" points="${pts.map(([x, y]) => `${x},${y}`).join(" ")}"/>
-       </svg>`);
-
     document.body.append(fundo);
-    void fundo.offsetWidth;
-    setTimeout(() => fundo.classList.add("rachando"), 600);    // um instante parado… e a rachadura começa a descer
-    setTimeout(() => fundo.classList.add("abrindo"), 3200);    // as metades descolam um pouco
-    setTimeout(() => fundo.classList.add("separando"), 4500);  // e se separam de vez
-    setTimeout(ir, 7600);                                      // tela preta por um instante, depois o site
+    if (reduzirMovimento()) { fundo.classList.add("preto"); return setTimeout(ir, 1000); }
+
+    const L = innerWidth, A = innerHeight;
+    const sorte = (a, b) => a + Math.random() * (b - a);
+    const meio = A * sorte(.4, .6);
+
+    // caminho do centro da fenda: ondula um pouco (fixo na tela, para crescer sempre pelo mesmo lugar)
+    const f1 = sorte(.004, .008), f2 = sorte(.015, .03), g1 = sorte(0, 6), g2 = sorte(0, 6);
+    const centro = y => L / 2 + Math.sin(y * f1 + g1) * L * .05 + Math.sin(y * f2 + g2) * 10;
+    // bordas em zigue-zague: um "dente" sorteado a cada 12px de altura
+    const linhas = [];
+    for (let y = -A; y <= 2 * A; y += 12) linhas.push({ y, e: sorte(0, 1) ** 2 * 16 - 3, d: sorte(0, 1) ** 2 * 16 - 3 });
+
+    // rachaduras que saem das bordas
+    const galhos = [];
+    for (let i = 0; i < 22; i++) {
+      const lado = i % 2 ? 1 : -1, sobe = Math.random() < .5 ? -1 : 1;
+      const pts = [[0, 0]];
+      let x = 0, y = 0, ang = sorte(10, 65) * Math.PI / 180;
+      const comp = sorte(50, i < 8 ? 320 : 160), n = 4 + Math.floor(sorte(0, 5));
+      for (let k = 0; k < n; k++) {
+        ang = Math.min(1.4, Math.max(0, ang + sorte(-.45, .45)));
+        x += Math.cos(ang) * comp / n * lado;
+        y += Math.sin(ang) * comp / n * sobe;
+        pts.push([x, y]);
+      }
+      galhos.push({ y0: meio + sorte(-.7, .7) * A, lado, pts, vez: null });
+    }
+
+    fundo.innerHTML = `
+      <svg class="rasgo-svg" viewBox="0 0 ${L} ${A}" aria-hidden="true">
+        <defs>
+          <filter id="rasgo-brilho" filterUnits="userSpaceOnUse" x="-60" y="-60" width="${L + 120}" height="${A + 120}">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g class="galhos" filter="url(#rasgo-brilho)"></g>
+        <path class="fenda-fundo"/>
+        <path class="fenda-brilho" filter="url(#rasgo-brilho)"/>
+        <path class="fenda-borda"/>
+      </svg>`;
+    const grupo = fundo.querySelector(".galhos");
+    const caminhos = [".fenda-fundo", ".fenda-brilho", ".fenda-borda"].map(c => fundo.querySelector(c));
+    galhos.forEach(g => {
+      g.el = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      g.el.setAttribute("class", "galho");
+      g.el.setAttribute("pathLength", "1");
+      g.el.setAttribute("stroke-dasharray", "0 1");
+      g.el.setAttribute("points", g.pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" "));
+      grupo.append(g.el);
+    });
+
+    // [tempo em ms, comprimento (× altura da tela), meia-largura em px, é tranco?]
+    const quadros = [
+      [0, 0, 0], [600, 0, 0],
+      [850, .14, 2.5, 1], [1400, .16, 3],
+      [1650, .4, 5, 1], [2250, .42, 6],
+      [2500, .8, 9, 1], [3100, .83, 11],
+      [3400, 1.5, 17, 1], [4100, 1.6, 21],
+      [4350, 1.8, 55, 1], [5000, 1.9, 75],
+      [6500, 3.2, L * 1.1],
+    ];
+    const falha = () => {
+      document.body.style.setProperty("--falha", `${sorte(-8, 8).toFixed(0)}px`);
+      document.body.classList.add("rasgo-falha"); fundo.classList.add("tranco");
+      setTimeout(() => { document.body.classList.remove("rasgo-falha"); fundo.classList.remove("tranco"); }, 170);
+    };
+
+    const inicio = performance.now();
+    let trecho = -1;
+    const quadro = agora => {
+      const ms = agora - inicio;
+      let i = quadros.findIndex(q => q[0] > ms);
+      if (i === -1) i = quadros.length - 1;
+      const [t0, c0, l0] = quadros[Math.max(0, i - 1)], [t1, c1, l1, tranco] = quadros[i];
+      let t = Math.min(1, Math.max(0, (ms - t0) / (t1 - t0 || 1)));
+      t = i === quadros.length - 1 ? t * t * t : tranco ? 1 - (1 - t) ** 3 : t;
+      if (i !== trecho) { trecho = i; if (tranco) falha(); }
+      const comp = (c0 + (c1 - c0) * t) * A, larg = l0 + (l1 - l0) * t;
+
+      if (comp > 2) {
+        const y0 = meio - comp / 2, y1 = meio + comp / 2, esq = [], dir = [];
+        const borda = (y, lado, r) => {
+          const p = Math.sin(Math.PI * (y - y0) / (y1 - y0)) ** .75, k = Math.min(1, larg * p / 6);
+          return centro(y) + lado * (larg * p + (r ? (lado < 0 ? r.e : r.d) * k : 0));
+        };
+        for (const r of linhas) if (r.y > y0 && r.y < y1) {
+          esq.push(`${borda(r.y, -1, r).toFixed(1)},${r.y}`);
+          dir.push(`${borda(r.y, 1, r).toFixed(1)},${r.y}`);
+        }
+        const d = "M" + [`${centro(y0).toFixed(1)},${y0.toFixed(1)}`, ...esq,
+                         `${centro(y1).toFixed(1)},${y1.toFixed(1)}`, ...dir.reverse()].join(" L") + " Z";
+        caminhos.forEach(c => c.setAttribute("d", d));
+
+        for (const g of galhos) {
+          if (g.vez === null && larg > 4 && g.y0 > y0 + comp * .15 && g.y0 < y1 - comp * .15) g.vez = ms;
+          if (g.vez === null) continue;
+          const f = Math.min(1, (ms - g.vez) / 900);
+          g.el.setAttribute("stroke-dasharray", `${(1 - (1 - f) ** 3).toFixed(3)} 1`);
+          g.el.setAttribute("transform", `translate(${borda(g.y0, g.lado).toFixed(1)} ${g.y0.toFixed(1)})`);
+        }
+      }
+      if (ms > 6000) fundo.classList.add("preto");
+      if (ms < 7200) requestAnimationFrame(quadro); else ir();
+    };
+    requestAnimationFrame(quadro);
+    setTimeout(ir, 9000);   // garantia, se a aba ficar em segundo plano
   }
   // voltando pelo botão "voltar" do navegador, tira o rasgo da frente
-  addEventListener("pageshow", e => { if (e.persisted) document.querySelectorAll(".rasgo").forEach(r => r.remove()); });
+  addEventListener("pageshow", e => {
+    if (!e.persisted) return;
+    document.querySelectorAll(".rasgo").forEach(r => r.remove());
+    document.body.classList.remove("rasgo-falha");
+  });
 
   // ---- Tela 2: Ovos ----
   function cartaoOvo(o) {
