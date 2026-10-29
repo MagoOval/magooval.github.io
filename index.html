@@ -505,42 +505,41 @@
     .sigilo .sg-anel, .sigilo .sg-estrela, .sigilo .sg-centro,
     .sigilo.conjurando, .sigilo.sucesso, .sigilo.falhou { animation: none; }
   }
-  /* ---------- Portal: senha que leva para outro site (a tela rasga ao meio) ---------- */
-  .rasgo {
-    position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: grid; place-items: center;
-    background: radial-gradient(ellipse at center, #3b1d5e 0%, #160b24 45%, #050308 100%);
-  }
-  .rasgo-msg {
-    position: relative; z-index: 0; margin: 0; padding: 0 24px; text-align: center;
-    font-size: 1.6rem; font-weight: 700; color: var(--gold); opacity: 0; transform: scale(.85);
-    text-shadow: 0 0 8px var(--gold), 0 0 24px rgba(179, 136, 255, .8);
-    transition: opacity .6s .45s, transform 1s .35s;
-  }
-  .rasgo.abrindo .rasgo-msg, .rasgo.calmo .rasgo-msg { opacity: 1; transform: none; }
-  .rasgo.calmo .rasgo-msg { transition: none; }
-  .rasgo-lado {
-    position: absolute; inset: 0; z-index: 1;
-    filter: drop-shadow(0 0 1.5px #f6e7c8) drop-shadow(0 0 14px rgba(190, 140, 255, .75));
-    transition: transform 1.1s cubic-bezier(.55, 0, .8, .4);
-  }
+  /* ---------- Portal: senha que leva para outro site (a tela rasga devagar) ---------- */
+  .rasgo { position: fixed; inset: 0; z-index: 9999; overflow: hidden; background: #000; }
+  .rasgo-lado { position: absolute; inset: 0; z-index: 1; filter: drop-shadow(0 0 1px #e9dcc0); }
   .rasgo-lado.esq { transform-origin: 0 100%; }
   .rasgo-lado.dir { transform-origin: 100% 100%; }
-  .rasgo.rachando .rasgo-lado { animation: tremer .4s linear; }
-  .rasgo.abrindo .rasgo-lado.esq { transform: translateX(-80vw) rotate(-10deg); }
-  .rasgo.abrindo .rasgo-lado.dir { transform: translateX(80vw) rotate(10deg); }
+  .rasgo.rachando .rasgo-lado { animation: tremer 2.6s linear; }
+  /* 1º as metades descolam um pouquinho… */
+  .rasgo.abrindo .rasgo-lado { transition: transform 1.3s ease-out; }
+  .rasgo.abrindo .rasgo-lado.esq { transform: translateX(-1.2vw) rotate(-1deg); }
+  .rasgo.abrindo .rasgo-lado.dir { transform: translateX(1.2vw) rotate(1deg); }
+  /* …e depois se separam de vez, devagar no começo */
+  .rasgo.separando .rasgo-lado { transition: transform 2.4s cubic-bezier(.55, 0, .9, .45); }
+  .rasgo.separando .rasgo-lado.esq { transform: translateX(-75vw) rotate(-9deg); }
+  .rasgo.separando .rasgo-lado.dir { transform: translateX(75vw) rotate(9deg); }
   .rasgo-recorte { position: absolute; inset: 0; overflow: hidden; background: var(--bg); }
   .rasgo-pagina { position: absolute; left: 0; }
   .rasgo-fenda {
     position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;
-    filter: drop-shadow(0 0 6px #c69bff);
+    filter: drop-shadow(0 0 1px #e9dcc0);
   }
-  .rasgo-fenda polyline { fill: none; stroke: #fff4d6; stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; }
-  .rasgo.rachando .rasgo-fenda polyline { animation: fenda .4s ease-out forwards; }
-  .rasgo.abrindo .rasgo-fenda { opacity: 0; transition: opacity .25s; }
-  @keyframes fenda { to { stroke-dashoffset: 0; } }
+  .rasgo-fenda polyline { fill: none; stroke: #000; stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .rasgo.rachando .rasgo-fenda polyline { animation: fenda 2.6s linear forwards; }
+  .rasgo.abrindo .rasgo-fenda { opacity: 0; transition: opacity 1s; }
+  /* a rachadura desce aos trancos: anda, para, anda… */
+  @keyframes fenda {
+    0% { stroke-dashoffset: 1; }    12% { stroke-dashoffset: .9; }  24% { stroke-dashoffset: .89; }
+    34% { stroke-dashoffset: .7; }  48% { stroke-dashoffset: .68; } 58% { stroke-dashoffset: .45; }
+    70% { stroke-dashoffset: .44; } 82% { stroke-dashoffset: .2; }  90% { stroke-dashoffset: .19; }
+    100% { stroke-dashoffset: 0; }
+  }
   @keyframes tremer {
-    20% { transform: translate(-3px, 1px); } 40% { transform: translate(3px, -1px); }
-    60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 1px); }
+    0%, 10%, 26%, 32%, 50%, 56%, 72%, 80%, 92%, 100% { transform: none; }
+    6%  { transform: translate(-2px, 1px); }  30% { transform: translate(2px, -1px); }
+    53% { transform: translate(-3px, 0); }    76% { transform: translate(3px, 1px); }
+    96% { transform: translate(-3px, -1px); }
   }
 </style>
 <style id="textura-pedra">
@@ -1061,10 +1060,9 @@
           return telaDetalhe(ovos.find(o => o.numero === data.numero), true);
         }
         if (data.status === "portal") {
-          sig.classList.add("sucesso");
-          m.className = "msg ok"; m.textContent = "Uma passagem se abriu…";
+          m.className = "msg"; m.textContent = "";   // nada de aviso: o rasgo é surpresa
           go.disabled = false;
-          return abrirPortal(data.url, data.mensagem);
+          return abrirPortal(data.url);
         }
         if (data.status === "repetido") {
           m.textContent = "Este ovo já atendeu ao seu chamado antes.";
@@ -1090,9 +1088,9 @@
   }
 
   // ---- Portal: senha que leva para outro site ----
-  // A tela é copiada em duas metades, que rasgam ao meio por uma linha em zigue-zague;
-  // atrás aparece a mensagem e depois o site abre na mesma aba.
-  function abrirPortal(endereco, mensagem) {
+  // A tela é copiada em duas metades. Uma rachadura desce devagar, aos trancos,
+  // as metades descolam e depois se separam, deixando só o preto; então o site abre na mesma aba.
+  function abrirPortal(endereco) {
     let destino;
     try { destino = new URL(endereco, location.href); } catch { return; }
     if (!/^https?:$/.test(destino.protocol)) return;
@@ -1100,15 +1098,9 @@
 
     const fundo = document.createElement("div");
     fundo.className = "rasgo";
-    const texto = document.createElement("p");
-    texto.className = "rasgo-msg";
-    texto.textContent = mensagem || "Uma passagem se abriu…";
-    fundo.append(texto);
-
     if (reduzirMovimento()) {
-      fundo.classList.add("calmo");
       document.body.append(fundo);
-      return setTimeout(ir, 1200);
+      return setTimeout(ir, 1000);
     }
 
     // linha do rasgo, de cima a baixo, perto do meio da tela (em %)
@@ -1151,9 +1143,10 @@
 
     document.body.append(fundo);
     void fundo.offsetWidth;
-    fundo.classList.add("rachando");                        // a rachadura aparece e a tela treme
-    setTimeout(() => fundo.classList.add("abrindo"), 450);  // as metades se separam
-    setTimeout(ir, 1900);
+    setTimeout(() => fundo.classList.add("rachando"), 600);    // um instante parado… e a rachadura começa a descer
+    setTimeout(() => fundo.classList.add("abrindo"), 3200);    // as metades descolam um pouco
+    setTimeout(() => fundo.classList.add("separando"), 4500);  // e se separam de vez
+    setTimeout(ir, 7600);                                      // tela preta por um instante, depois o site
   }
   // voltando pelo botão "voltar" do navegador, tira o rasgo da frente
   addEventListener("pageshow", e => { if (e.persisted) document.querySelectorAll(".rasgo").forEach(r => r.remove()); });
