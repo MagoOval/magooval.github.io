@@ -69,6 +69,7 @@
   h2 { font-size: 1.2rem; margin: 0 0 12px; }
   h3 { font-size: 1rem; margin: 0 0 10px; }
   p.sub { color: var(--muted); margin: 0 0 24px; }
+  p.autor { font-size: 1.3rem; font-weight: 700; margin: 0 0 6px; }
   .card {
     background: var(--card); border: 1px solid var(--line); border-radius: 16px;
     padding: 20px; box-shadow: var(--shadow);
@@ -830,6 +831,7 @@
     document.getElementById("saudacao").textContent = "";
     app.innerHTML = `
       <div class="estreito">
+        <p class="autor center"><span class="brilho-aura">Mago dos Ovos</span> criou os ovos.</p>
         <p class="sub center">${cad ? "Crie sua conta para começar a caçar." : "Entre na sua conta para começar a caçar."}</p>
         <form class="card" id="f">
           ${cad ? `<label for="n">Seu nome</label><input id="n" required autocomplete="nickname" maxlength="40">` : ""}
