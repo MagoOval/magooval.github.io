@@ -191,7 +191,11 @@
     }
   }
   conferir();
-  setInterval(conferir, 1000);
+  setInterval(conferir, 250);
+  // ao voltar para a aba ou para a janela, confere na hora
+  addEventListener("focus", conferir);
+  addEventListener("pageshow", conferir);
+  document.addEventListener("visibilitychange", conferir);
 
   // ---------- Olhos no escuro ----------
   const olhos = document.getElementById("olhos");
