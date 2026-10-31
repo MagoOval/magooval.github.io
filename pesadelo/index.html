@@ -140,16 +140,17 @@
   const FORMAS = [
     `<circle r=".42"/>`,
     `<path d="M-.4 .42 V0 A.4 .4 0 0 1 .4 0 V.42 Z"/>`,
-    `<circle r=".42"/><rect x="-.17" y="-.17" width=".34" height=".34"/>`,
-    `<path d="M.25 -.33 A.33 .33 0 1 0 .26 .1 M-.12 .2 V.46 M.02 .2 L.27 .46"/>`,
-    `<path d="M-.46 -.42 H.46 M-.03 -.42 V.42 M-.46 .42 H.46"/>`,
+    `<path d="M-.4 -.1 C-.35 -.45 .15 -.42 .05 -.05 C-.02 .2 -.02 .45 .2 .43 C.3 .42 .38 .33 .42 .26"/>`,
+    `<circle cy="-.3" r=".12"/><path d="M0 -.18 V.44 M-.42 .44 V.05 H.42 V.44"/>`,
     `<path d="M0 -.45 L.45 0 L0 .45 L-.45 0 Z"/>`,
+    `<rect x="-.4" y="-.4" width=".8" height=".8"/><path d="M0 -.4 V.4 M-.4 0 H.4"/>`,
     `<circle r=".42"/><circle class="cheio" r=".08"/>`,
-    `<path d="M-.4 -.42 H.4 L0 .22 Z M-.43 .42 H.43"/>`,
+    `<rect x="-.17" y="-.17" width=".34" height=".34"/><path d="M-.17 -.3 V.3 M.17 -.3 V.3 M-.3 -.17 H.3 M-.3 .17 H.3"/>` +
+      `<circle cx="-.3" cy="-.3" r=".13"/><circle cx=".3" cy="-.3" r=".13"/><circle cx="-.3" cy=".3" r=".13"/><circle cx=".3" cy=".3" r=".13"/>`,
   ];
-  const ORDEM = [0, 1, 0, 2, 0, 3, 4, 5, 3, 6, 2, 5, 7, 0, 3];
+  const ORDEM = [0, 1, 0, 2, 3, 4, 5, 6, 7, 4];
 
-  const C = 300, R_GLIFO = 205, R_ANEL = 268, TAM = 50;
+  const C = 300, R_GLIFO = 200, R_ANEL = 268, TAM = 62;
   // a falha do anel fica no alto, à esquerda (ângulos contados a partir do topo, no sentido horário)
   const FALHA_INI = 315, FALHA_FIM = 331;
   const ponto = (graus, r) => {
