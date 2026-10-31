@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>Pesadelo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23050307'/%3E%3Cpath d='M44 13 A38 38 0 1 0 30 20' fill='none' stroke='%23d11a2a' stroke-width='9'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Are+You+Serious&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fundo: #050307;
+    --osso: #ddd2c4;
+    --sangue: #d11a2a;
+    --sangue-escuro: #5c0710;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; background: var(--fundo); color: var(--osso);
+    font-family: "Are You Serious", cursive;
+  }
+
+  /* ---------- Fundo de pesadelo ---------- */
+  .nevoa, .grao, .vinheta, .olhos { position: fixed; inset: 0; pointer-events: none; }
+  .nevoa { overflow: hidden; }
+  .nevoa i {
+    position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; filter: blur(60px);
+    opacity: .55; transition: background 3s;
+  }
+  .nevoa i:nth-child(1) { left: -35vmax; top: -30vmax; background: radial-gradient(circle, #2a0a2e, transparent 65%); animation: vagar 38s ease-in-out infinite alternate; }
+  .nevoa i:nth-child(2) { right: -40vmax; bottom: -35vmax; background: radial-gradient(circle, #3a0710, transparent 65%); animation: vagar 46s ease-in-out infinite alternate-reverse; }
+  .nevoa i:nth-child(3) { left: 10vmax; bottom: -55vmax; background: radial-gradient(circle, #14101e, transparent 60%); animation: vagar 54s ease-in-out infinite alternate; }
+  @keyframes vagar {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(12vmax, 8vmax) scale(1.15); }
+    100% { transform: translate(-6vmax, 14vmax) scale(.95); }
+  }
+  /* chiado de TV velha por cima de tudo */
+  .grao {
+    opacity: .09; mix-blend-mode: screen;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: chiado .6s steps(4) infinite;
+  }
+  @keyframes chiado {
+    25% { transform: translate(-30px, 18px); } 50% { transform: translate(22px, -26px); }
+    75% { transform: translate(-14px, -10px); } 100% { transform: translate(0, 0); }
+  }
+  .vinheta {
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, .7) 70%, #000 100%);
+    animation: respirar 7s ease-in-out infinite;
+  }
+  @keyframes respirar { 50% { opacity: .82; } }
+
+  /* olhos que aparecem no escuro e piscam */
+  .olho-par { position: absolute; display: flex; gap: var(--vao); opacity: 0; animation: espreitar var(--dur) ease-in-out forwards; }
+  .olho-par span {
+    width: var(--tam); height: calc(var(--tam) * .55); border-radius: 50%;
+    background: radial-gradient(ellipse, #ff4b3a 0%, #b0101c 45%, transparent 75%);
+    box-shadow: 0 0 calc(var(--tam) * 1.2) rgba(209, 26, 42, .55);
+    animation: piscar var(--dur) linear forwards;
+  }
+  @keyframes espreitar { 15%, 80% { opacity: var(--forca); } 100% { opacity: 0; } }
+  @keyframes piscar { 0%, 44%, 50%, 70%, 75%, 100% { transform: scaleY(1); } 47%, 72% { transform: scaleY(.08); } }
+
+  /* ---------- As duas telas ---------- */
+  main { position: relative; z-index: 1; height: 100%; display: grid; place-items: center; padding: 16px; }
+  .tela { grid-area: 1 / 1; transition: opacity 1.6s ease, filter 1.6s ease; }
+  .tela.oculta { opacity: 0; filter: blur(8px); pointer-events: none; }
+
+  .mensagem { text-align: center; max-width: 900px; }
+  .mensagem p {
+    margin: 0 0 .9em; font-size: clamp(1.5rem, 5.2vw, 2.9rem); line-height: 1.25; letter-spacing: .02em;
+    text-shadow: 0 0 14px rgba(160, 0, 20, .7), 0 0 2px #000;
+    opacity: 0; animation: surgir 2.4s ease forwards, tremular 9s 3s infinite;
+  }
+  .mensagem p:nth-child(2) { animation-delay: 1.4s, 5s; }
+  .mensagem p:nth-child(3) { animation-delay: 2.8s, 7s; margin-bottom: 0; color: #e2554f; }
+  @keyframes surgir { from { opacity: 0; filter: blur(10px); } to { opacity: 1; filter: blur(0); } }
+  @keyframes tremular {
+    0%, 92%, 96%, 100% { opacity: 1; transform: none; }
+    93% { opacity: .25; transform: translateX(-2px); } 95% { opacity: .8; transform: translateX(2px); }
+  }
+
+  .selo { width: min(92vw, 88vh, 640px); aspect-ratio: 1; }
+  .selo svg {
+    width: 100%; height: 100%; display: block; overflow: visible;
+    filter: drop-shadow(0 0 5px var(--sangue)) drop-shadow(0 0 16px rgba(209, 26, 42, .5));
+  }
+  .selo.aceso svg { animation: pulsar 4s ease-in-out 5s infinite; }
+  .selo .anel, .selo .glifo * {
+    fill: none; stroke: var(--sangue); stroke-linecap: butt; stroke-linejoin: miter;
+  }
+  .selo .anel { stroke-width: 7; }
+  .selo .glifo { opacity: 0; }
+  .selo .glifo .cheio { fill: var(--sangue); stroke: none; }
+  .selo.aceso .glifo { animation: acender 1.2s ease forwards; }
+  @keyframes acender { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulsar { 50% { filter: drop-shadow(0 0 8px #ff3a3a) drop-shadow(0 0 26px rgba(209, 26, 42, .75)); } }
+  .selo .anel { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .selo.aceso .anel { animation: tracar 4s ease-in-out .3s forwards; }
+  @keyframes tracar { to { stroke-dashoffset: 0; } }
+
+  /* às 3h33 o pesadelo fica vermelho */
+  body.hora .nevoa i:nth-child(1) { background: radial-gradient(circle, #4a0612, transparent 65%); }
+  body.hora .nevoa i:nth-child(3) { background: radial-gradient(circle, #2b0408, transparent 60%); }
+  body.hora .vinheta { animation-duration: 1.6s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nevoa i, .grao, .vinheta, .mensagem p { animation: none; opacity: 1; }
+    .nevoa i { opacity: .55; }
+    .grao { opacity: .09; }
+    .selo.aceso .glifo, .selo.aceso .anel, .selo.aceso svg { animation: none; opacity: 1; stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="nevoa"><i></i><i></i><i></i></div>
+  <div class="olhos" id="olhos"></div>
+
+  <main>
+    <section class="tela mensagem" id="mensagem">
+      <p>O pesadelo lhe libertará.</p>
+      <p>Ele usará o horário que lhe foi dado para adentrar.</p>
+      <p>Adinkra.</p>
+    </section>
+    <section class="tela selo oculta" id="selo" aria-hidden="true"></section>
+  </main>
+
+  <div class="grao"></div>
+  <div class="vinheta"></div>
+
+<script>
+(() => {
+  // ---------- O selo ----------
+  // formas desenhadas numa caixa de -0.5 a 0.5 (y para baixo)
+  const FORMAS = [
+    `<circle r=".42"/>`,
+    `<path d="M-.4 .42 V0 A.4 .4 0 0 1 .4 0 V.42 Z"/>`,
+    `<circle r=".42"/><rect x="-.17" y="-.17" width=".34" height=".34"/>`,
+    `<path d="M.25 -.33 A.33 .33 0 1 0 .26 .1 M-.12 .2 V.46 M.02 .2 L.27 .46"/>`,
+    `<path d="M-.46 -.42 H.46 M-.03 -.42 V.42 M-.46 .42 H.46"/>`,
+    `<path d="M0 -.45 L.45 0 L0 .45 L-.45 0 Z"/>`,
+    `<circle r=".42"/><circle class="cheio" r=".08"/>`,
+    `<path d="M-.4 -.42 H.4 L0 .22 Z M-.43 .42 H.43"/>`,
+  ];
+  const ORDEM = [0, 1, 0, 2, 0, 3, 4, 5, 3, 6, 2, 5, 7, 0, 3];
+
+  const C = 300, R_GLIFO = 205, R_ANEL = 268, TAM = 50;
+  // a falha do anel fica no alto, à esquerda (ângulos contados a partir do topo, no sentido horário)
+  const FALHA_INI = 315, FALHA_FIM = 331;
+  const ponto = (graus, r) => {
+    const a = graus * Math.PI / 180;
+    return [C + r * Math.sin(a), C - r * Math.cos(a)];
+  };
+  const [x1, y1] = ponto(FALHA_FIM, R_ANEL), [x2, y2] = ponto(FALHA_INI, R_ANEL);
+  // a mensagem começa na ponta do sentido horário da falha e termina na outra ponta
+  const arco = 360 - (FALHA_FIM - FALHA_INI), passo = arco / ORDEM.length;
+  const glifos = ORDEM.map((f, i) => {
+    const ang = FALHA_FIM + passo * (i + .5), [x, y] = ponto(ang, R_GLIFO);
+    return `<g class="glifo" style="animation-delay:${(1 + i * .28).toFixed(2)}s"
+               transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(${TAM})"
+               stroke-width="${(5 / TAM).toFixed(3)}">${FORMAS[f]}</g>`;
+  }).join("");
+  const selo = document.getElementById("selo");
+  selo.innerHTML = `
+    <svg viewBox="0 0 600 600">
+      <path class="anel" pathLength="1" d="M${x1.toFixed(1)} ${y1.toFixed(1)} A${R_ANEL} ${R_ANEL} 0 1 1 ${x2.toFixed(1)} ${y2.toFixed(1)}"/>
+      ${glifos}
+    </svg>`;
+
+  // ---------- Relógio do aparelho ----------
+  const mensagem = document.getElementById("mensagem");
+  let estado = null;
+  function conferir() {
+    const d = new Date();
+    const hora = d.getHours() === 3 && d.getMinutes() === 33;
+    if (hora === estado) return;
+    estado = hora;
+    document.body.classList.toggle("hora", hora);
+    mensagem.classList.toggle("oculta", hora);
+    selo.classList.toggle("oculta", !hora);
+    selo.setAttribute("aria-hidden", String(!hora));
+    if (hora) {
+      selo.classList.remove("aceso");
+      void selo.offsetWidth;            // reinicia a animação de desenhar
+      selo.classList.add("aceso");
+    }
+  }
+  conferir();
+  setInterval(conferir, 1000);
+
+  // ---------- Olhos no escuro ----------
+  const olhos = document.getElementById("olhos");
+  const sorte = (a, b) => a + Math.random() * (b - a);
+  function espiar() {
+    const par = document.createElement("div");
+    const tam = sorte(8, 22), dur = sorte(3.5, 6);
+    par.className = "olho-par";
+    par.innerHTML = "<span></span><span></span>";
+    // perto das bordas, longe do texto do meio
+    const borda = Math.random() < .5;
+    const x = borda ? (Math.random() < .5 ? sorte(3, 22) : sorte(72, 92)) : sorte(5, 90);
+    const y = borda ? sorte(5, 90) : (Math.random() < .5 ? sorte(3, 16) : sorte(80, 92));
+    par.style.cssText = `left:${x}%; top:${y}%; --tam:${tam}px; --vao:${tam * sorte(.6, 1.1)}px;` +
+                        `--dur:${dur}s; --forca:${sorte(.35, .8)}`;
+    olhos.append(par);
+    setTimeout(() => par.remove(), dur * 1000 + 100);
+    setTimeout(espiar, (estado ? sorte(.8, 2.5) : sorte(3, 8)) * 1000);
+  }
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setTimeout(espiar, 2500);
+})();
+</script>
+</body>
+</html>
