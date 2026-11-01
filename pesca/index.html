@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Área de pesca</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%231a5aa6'/%3E%3Crect x='1' y='3' width='5' height='3' fill='%237fc8f8'/%3E%3Crect x='2' y='2' width='3' height='5' fill='%237fc8f8'/%3E%3Crect x='6' y='2' width='1' height='5' fill='%237fc8f8'/%3E%3Crect x='2' y='4' width='1' height='1' fill='%230e2a47'/%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="../desafio.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #1a5aa6; --azul-escuro: #0e3a73; --borda: #0a2547;
+    --verde: #3ccf6e; --verde-escuro: #15803d; --nome: #5cf08a; --cinza: #8a9bb0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh; padding: 24px 16px 48px; color: #fff;
+    font-family: "VT323", monospace; font-size: 22px;
+    background-color: var(--azul);
+    background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, .07) 0 4px, transparent 4px 12px);
+  }
+  main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  h1, #pescar, .num, .letra, .nome, .interroga, .novo {
+    font-family: "Press Start 2P", monospace; font-weight: 400;
+  }
+  h1 { margin: 4px 0 0; font-size: clamp(1.25rem, 5.5vw, 2.1rem); text-align: center; text-shadow: 4px 4px 0 var(--borda); }
+
+  /* moldura de pixel: borda de 4px com os cantos "cortados" */
+  .px {
+    --cor-borda: var(--borda);
+    box-shadow: 0 -4px 0 0 var(--cor-borda), 0 4px 0 0 var(--cor-borda), -4px 0 0 0 var(--cor-borda), 4px 0 0 0 var(--cor-borda);
+  }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+  /* ---------- lago ---------- */
+  .cena { position: relative; width: calc(100% - 8px); line-height: 0; background: #000; }
+  .cena canvas { width: 100%; height: auto; display: block; cursor: pointer; }
+  .aviso {
+    position: absolute; inset: 0; display: grid; place-content: center; gap: 14px; padding: 16px;
+    background: rgba(10, 37, 71, .82); text-align: center; line-height: 1.2; font-size: 24px;
+  }
+  .aviso[hidden] { display: none; }
+  .aviso a { color: #fff; font-family: "Press Start 2P", monospace; font-size: 12px; background: var(--verde-escuro); padding: 10px 14px; text-decoration: none; justify-self: center; }
+
+  /* ---------- botão ---------- */
+  #pescar {
+    --cor-borda: #0b4a22; min-width: 230px; padding: 16px 28px 14px; border: 0; cursor: pointer;
+    font-size: 1.15rem; color: #fff; background: var(--verde); text-shadow: 2px 2px 0 var(--verde-escuro);
+    box-shadow: 0 -4px 0 0 var(--cor-borda), 0 4px 0 0 var(--cor-borda), -4px 0 0 0 var(--cor-borda), 4px 0 0 0 var(--cor-borda),
+                inset 0 -6px 0 0 #21a453, inset 0 4px 0 0 #7af0a2;
+    touch-action: manipulation; user-select: none;
+  }
+  #pescar:hover:not(:disabled) { filter: brightness(1.08); }
+  #pescar:active:not(:disabled) { transform: translateY(3px); }
+  #pescar:disabled { filter: saturate(.4) brightness(.85); cursor: default; }
+  #pescar.puxar { background: #f2b33d; text-shadow: 2px 2px 0 #8a5a00; --cor-borda: #5a3a00; animation: tremer .12s steps(2) infinite;
+    box-shadow: 0 -4px 0 0 var(--cor-borda), 0 4px 0 0 var(--cor-borda), -4px 0 0 0 var(--cor-borda), 4px 0 0 0 var(--cor-borda),
+                inset 0 -6px 0 0 #c9871a, inset 0 4px 0 0 #ffe08a; }
+  #pescar:focus-visible { outline: 4px solid #fff; outline-offset: 8px; }
+  @keyframes tremer { 50% { transform: translateX(3px); } }
+
+  /* ---------- o que saiu ---------- */
+  .painel { width: min(calc(100% - 8px), 480px); min-height: 84px; padding: 10px 16px; background: var(--azul-escuro);
+    display: flex; align-items: center; justify-content: center; gap: 14px; line-height: 1.1; }
+  .painel .sprite { width: 64px; flex: none; }
+  .painel .t1 { font-size: 24px; }
+  .painel .t2 { font-size: 20px; opacity: .8; }
+  .painel.aparece { animation: aparece .35s steps(4); }
+  @keyframes aparece { from { transform: scale(.7); opacity: 0; } }
+  .novo { display: inline-block; margin-left: 8px; padding: 4px 6px 3px; background: #ffd23f; color: #3b2a00; font-size: 9px; vertical-align: 3px; }
+  .recompensa { margin-top: 6px; color: #ffd23f; }
+  .recompensa .destaque { color: #fff; background: var(--verde-escuro); padding: 0 4px; }
+
+  /* ---------- índice ---------- */
+  .indice { width: 100%; }
+  /* a fonte "Press Start 2P" não tem o Í; aqui vai a outra fonte pixelada */
+  .indice h2 { margin: 0 4px 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+    font-weight: 400; font-size: 40px; line-height: 1; text-shadow: 3px 3px 0 var(--borda); }
+  .indice h2 small { font-size: 24px; opacity: .85; text-shadow: none; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 18px; padding: 4px; }
+  .carta { padding: 10px 10px 12px; background: rgba(10, 37, 71, .55); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .carta.pego { --cor-borda: #1f9e4f; background: rgba(21, 128, 61, .28); }
+  .carta.brilha { animation: brilha 1s steps(6); }
+  @keyframes brilha { 0%, 50% { background: rgba(92, 240, 138, .55); } }
+  .topo { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .num { font-size: 11px; opacity: .9; }
+  .letra { min-width: 32px; height: 32px; padding: 0 5px; display: grid; place-items: center; font-size: 14px; background: #fff; color: var(--azul); }
+  .carta:not(.pego) .letra { background: #34506f; color: var(--cinza); }
+  .figura { height: 60px; display: grid; place-items: center; }
+  .figura .sprite { width: 64px; }
+  .interroga { font-size: 28px; color: var(--cinza); opacity: .6; }
+  .nome { font-size: 10px; line-height: 1.5; text-align: center; color: var(--cinza); }
+  .pego .nome { color: var(--nome); }
+  .vezes { font-size: 18px; opacity: .75; line-height: 1; }
+
+  /* ---------- minijogo ---------- */
+  .minijogo { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(4, 18, 40, .55);
+    touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+  .minijogo[hidden] { display: none; }
+  .minijogo .caixa { --cor-borda: #2a170c; background: #6b4423; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .minijogo canvas { height: min(456px, 68vh); width: auto; display: block; }
+  .dica { margin: 0; text-align: center; font-size: 20px; line-height: 1; color: #ffe9c4; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Área de pesca</h1>
+
+  <div class="cena px">
+    <canvas id="cena" width="192" height="112" aria-label="Lago de pesca"></canvas>
+    <div id="aviso" class="aviso" hidden></div>
+  </div>
+
+  <button id="pescar" class="px" type="button" disabled>Pescar</button>
+  <div id="resultado" class="painel px" aria-live="polite">Carregando...</div>
+
+  <section class="indice">
+    <h2>Índice <small id="contagem"></small></h2>
+    <div class="grade" id="grade"></div>
+  </section>
+</main>
+
+<div id="minijogo" class="minijogo" hidden>
+  <div class="caixa px">
+    <canvas id="barra" width="36" height="152"></canvas>
+    <p class="dica">SEGURE para subir<br>(clique, toque ou espaço)</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const limita = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const mistura = (a, b, t) => a + (b - a) * t;
+  const suave = t => (t = limita(t), t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+  const freia = t => 1 - (1 - limita(t)) ** 3;
+  const inteiro = (a, b) => a + Math.floor(Math.random() * (b - a));   // igual ao Random.Next(a, b)
+
+  async function rpc(nome, args) {
+    const { data, error } = await Desafio.sb.rpc(nome, args);
+    if (error) throw error;
+    return data;
+  }
+
+  // ================= DESENHOS =================
+  // o desenho de cada peixe vem do Supabase só depois de pescado: {"p": cores, "l": linhas, "g": giro, "a": anzol}
+  function folha(d, pendurado) {
+    const linhas = d.l, h = linhas.length, w = linhas[0].length, gira = pendurado && d.g === 90;
+    const c = document.createElement("canvas");
+    c.width = gira ? h : w; c.height = gira ? w : h;
+    const k = c.getContext("2d");
+    linhas.forEach((linha, y) => [...linha].forEach((ch, x) => {
+      if (ch === "." || !d.p[ch]) return;
+      k.fillStyle = d.p[ch];
+      gira ? k.fillRect(h - 1 - y, x, 1, 1) : k.fillRect(x, y, 1, 1);
+    }));
+    const [ax, ay] = d.a || [0, 0];
+    return { img: c, ax: gira ? h - 1 - ay : ax, ay: gira ? ax : ay };
+  }
+  function sprite(d) {
+    const { img } = folha(d, false);
+    img.className = "sprite";
+    img.style.width = img.width * 4 + "px";
+    return img;
+  }
+  // peixe genérico do minijogo (todo peixe é igual até ser pego)
+  const SOMBRA = folha({ p: { k: "#0e2a47", b: "#7fc8f8", w: "#fff" }, l: [
+    "........", "..kkkk.k", ".kbbbbkk", "kbwkbbbk", "kbbbbbbk", ".kbbbbkk", "..kkkk.k", "........"] }, false).img;
+  const ALERTA = folha({ p: { k: "#5a3300", y: "#ffd23f" }, l: [".k.", "kyk", "kyk", "kyk", "kyk", ".k.", "kyk", ".k."] }, false).img;
+
+  // ================= LAGO =================
+  const cv = $("cena"), g = cv.getContext("2d");
+  const W = 192, H = 112, AGUA = 66;
+  const APOIO = { x: 178, y: 100 }, COMP = 84, ALVO = { x: 64, y: AGUA - 3 };
+  const ponta = (a, d) => { const r = a * Math.PI / 180; return { x: APOIO.x + d - COMP * Math.sin(r), y: APOIO.y - COMP * Math.cos(r) }; };
+  const ponto = (x, y, cor) => { g.fillStyle = cor; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
+  function reta(x0, y0, x1, y1, cor, grossura = 1) {
+    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+    const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    let e = dx + dy;
+    g.fillStyle = cor;
+    for (;;) {
+      g.fillRect(x0, y0, grossura, grossura);
+      if (x0 === x1 && y0 === y1) break;
+      const e2 = 2 * e;
+      if (e2 >= dy) { e += dy; x0 += sx; }
+      if (e2 <= dx) { e += dx; y0 += sy; }
+    }
+  }
+
+  // fundo fixo (céu, sol, morros, água, píer), desenhado uma vez só
+  const fixo = document.createElement("canvas");
+  fixo.width = W; fixo.height = H;
+  (() => {
+    const k = fixo.getContext("2d");
+    const faixas = (cores, y0, y1) => {
+      const alt = (y1 - y0) / cores.length;
+      cores.forEach((c, i) => {
+        const a = Math.round(y0 + i * alt), b = Math.round(y0 + (i + 1) * alt);
+        k.fillStyle = c; k.fillRect(0, a, W, b - a);
+        if (i + 1 < cores.length) {                      // pontilhado entre as faixas
+          k.fillStyle = cores[i + 1];
+          for (let x = 0; x < W; x += 2) k.fillRect(x + (b % 2), b - 1, 1, 1);
+        }
+      });
+    };
+    faixas(["#2f6fc4", "#3a7ccd", "#4a8dd8", "#5da0e3", "#76b5ec", "#93c8f3", "#b3dbf8"], 0, AGUA);
+    for (let y = -10; y <= 10; y++) for (let x = -10; x <= 10; x++) {
+      const r = x * x + y * y;
+      if (r <= 42) { k.fillStyle = "#fff3a6"; k.fillRect(26 + x, 18 + y, 1, 1); }
+      else if (r <= 72 && (x + y) % 2 === 0) { k.fillStyle = "#ffe57a"; k.fillRect(26 + x, 18 + y, 1, 1); }
+    }
+    for (let x = 0; x < W; x++) {
+      const topo = Math.round(55 + 3 * Math.sin(x / 14) + 2 * Math.sin(x / 5.3 + 1));
+      k.fillStyle = "#2d63a3"; k.fillRect(x, topo, 1, AGUA - topo);
+      k.fillStyle = "#3f78b8"; k.fillRect(x, topo, 1, 1);
+    }
+    faixas(["#2a7fd0", "#2370c0", "#1d62b0", "#18559e", "#13498c", "#0f3e7a"], AGUA, H);
+    // píer
+    k.fillStyle = "#4a2e17"; k.fillRect(150, 92, 42, 20);
+    k.fillStyle = "#8a5a32"; k.fillRect(150, 92, 42, 4);
+    k.fillStyle = "#a8743f"; k.fillRect(150, 92, 42, 1);
+    k.fillStyle = "#6b4423"; k.fillRect(150, 96, 42, 16);
+    k.fillStyle = "#4a2e17";
+    for (let x = 150; x < W; x += 7) k.fillRect(x, 96, 1, 16);
+    k.fillStyle = "#3a2312"; k.fillRect(153, 96, 3, 16); k.fillRect(184, 96, 3, 16);
+  })();
+
+  const NUVENS = [{ x: 60, y: 14, v: 1 / 420, f: [[0, 4, 24, 4], [4, 1, 10, 4], [12, 0, 8, 5], [18, 2, 5, 3]] },
+                  { x: 150, y: 30, v: 1 / 650, f: [[0, 3, 16, 3], [3, 0, 8, 4], [10, 1, 4, 3]] }];
+  const BRILHOS = Array.from({ length: 9 }, (_, i) => ({ x: (i * 53 + 17) % 140 + 4, y: AGUA + 5 + (i * 29) % 40, f: i * 377 }));
+  let ondinhas = [];
+  const ondinha = (x, y) => ondinhas.push({ x, y, t: agora });
+
+  function desenharLago() {
+    g.drawImage(fixo, 0, 0);
+    for (const n of NUVENS) {
+      const x = Math.round(((n.x + agora * n.v) % (W + 40)) - 30);
+      g.fillStyle = "#ffffff";
+      for (const [a, b, c, d] of n.f) g.fillRect(x + a, n.y + b, c, d);
+      g.fillStyle = "#d6ebfb"; g.fillRect(x + n.f[0][0], n.y + n.f[0][1] + n.f[0][3] - 1, n.f[0][2], 1);
+    }
+    // crista das ondas, andando
+    const passo = Math.floor(agora / 140);
+    for (let x = 0; x < W; x++) {
+      const alto = (x + passo) % 16 < 8;
+      ponto(x, alto ? AGUA : AGUA + 1, "#7cc0f2");
+      if ((x - passo * 2) % 24 < 5) ponto(x, AGUA + 12, "#3b8fdc");
+      if ((x + passo) % 30 < 4) ponto(x, AGUA + 26, "#2a73c0");
+    }
+    for (const b of BRILHOS) if (Math.floor((agora + b.f) / 600) % 3 === 0) { ponto(b.x, b.y, "#cfe8ff"); ponto(b.x + 1, b.y, "#cfe8ff"); }
+    ondinhas = ondinhas.filter(o => agora - o.t < 700);
+    for (const o of ondinhas) {
+      const f = (agora - o.t) / 700, r = 2 + f * 10;
+      g.globalAlpha = 1 - f;
+      for (let i = 0; i < 20; i++) {
+        const an = i / 20 * Math.PI * 2;
+        ponto(o.x + Math.cos(an) * r, o.y + 3 + Math.sin(an) * r * .3, "#e6f4ff");
+      }
+      g.globalAlpha = 1;
+    }
+  }
+
+  function desenharVara(a, d) {
+    const r = a * Math.PI / 180, ux = -Math.sin(r), uy = -Math.cos(r);
+    const b = { x: APOIO.x + d, y: APOIO.y }, q = ponta(a, d);
+    reta(b.x + ux * 14, b.y + uy * 14, q.x, q.y, "#5b3a1e");
+    reta(b.x, b.y, b.x + ux * 14, b.y + uy * 14, "#c48a4e", 2);
+    g.fillStyle = "#59626b"; g.fillRect(Math.round(b.x + ux * 9 + 2), Math.round(b.y + uy * 9 - 1), 3, 3);
+    g.fillStyle = "#9aa4ad"; g.fillRect(Math.round(b.x + ux * 9 + 3), Math.round(b.y + uy * 9), 1, 1);
+    ponto(q.x, q.y, "#e8e8e8");
+    return q;
+  }
+  function desenharLinha(q, f, curva) {
+    const mx = (q.x + f.x) / 2, my = (q.y + f.y) / 2 + curva;
+    g.globalAlpha = .9;
+    for (let i = 0; i <= 60; i++) {
+      const t = i / 60, s = 1 - t;
+      ponto(s * s * q.x + 2 * s * t * mx + t * t * f.x, s * s * q.y + 2 * s * t * my + t * t * f.y, "#eaf6ff");
+    }
+    g.globalAlpha = 1;
+  }
+  function desenharBoia(x, y) {          // (x, y) = onde a linha prende; abaixo da água não aparece
+    const cores = ["#e53935", "#e53935", "#f5f5f5", "#f5f5f5"];
+    x = Math.round(x); y = Math.round(y);
+    cores.forEach((c, i) => { if (y + i <= AGUA) { g.fillStyle = c; g.fillRect(x - 1, y + i, 3, 1); } });
+  }
+  function desenharPresa(p, x, y) {
+    g.save();
+    g.beginPath(); g.rect(0, 0, W, AGUA + 1); g.clip();
+    g.drawImage(p.img, Math.round(x - p.ax), Math.round(y - p.ay));
+    g.restore();
+  }
+
+  // ================= PESCA =================
+  const botao = $("pescar"), painel = $("resultado");
+  let agora = 0, fase = "parado", t0 = 0;
+  const ir = f => { fase = f; t0 = agora; atualizarBotao(); };
+  let pronto = false, pescaria = null, erroPesca = null, mordida = 0, solta = null, presa = null, saida = { a: 0, fim: null };
+  let ultimo = { a: -5, fim: null };
+
+  function atualizarBotao() {
+    botao.classList.toggle("puxar", fase === "fisgou");
+    botao.textContent = fase === "parado" ? "Pescar" : fase === "fisgou" ? "PUXAR!" : "Pescando...";
+    botao.disabled = !pronto || !(fase === "parado" || fase === "fisgou");
+  }
+  function mensagem(html, classe = "") {
+    painel.className = "painel px " + classe;
+    painel.innerHTML = html;
+    void painel.offsetWidth;
+    painel.classList.add("aparece");
+  }
+
+  function pescar() {
+    if (fase !== "parado" || !pronto) return;
+    pescaria = null; erroPesca = null; presa = null;
+    rpc("pesca_lancar").then(r => {
+      if (r.status === "ok") pescaria = r;
+      else erroPesca = r.status === "aguarde" ? "Calma! Espere uns segundinhos." : "A área de pesca está fechada.";
+    }).catch(() => { erroPesca = "Falha na conexão. Tente de novo."; });
+    mordida = 1500 + Math.random() * 2500;
+    const q = ponta(anguloLancando(820), 0);
+    solta = { x: q.x, y: q.y + 6 };
+    mensagem("Esperando o peixe morder...");
+    ir("lancando");
+  }
+  const anguloLancando = t => t < 450 ? -5 : t < 700 ? -5 - 12 * suave((t - 450) / 250) : t < 1000 ? mistura(-17, 52, freia((t - 700) / 300)) : 52;
+
+  function puxarLinha() {
+    if (fase !== "fisgou") return;
+    iniciarMinijogo(pescaria.dificuldade, pescaria.movimento);
+    ir("minijogo");
+  }
+  function fugiu(texto) {
+    if (pescaria) rpc("pesca_puxar", { p_id: pescaria.id, p_pegou: false }).catch(() => {});
+    pescaria = null;
+    mensagem(texto);
+    ir("fugiu");
+  }
+
+  function mostrar(r) {
+    pegos[r.numero] = r;
+    desenharIndice(r.numero);
+    mensagem(`<div><div class="t1">Você pescou: <b>${esc(r.nome)}</b>${r.novo ? `<span class="novo">NOVO!</span>` : ""}</div>
+      <div class="t2">#${esc(r.numero)} · letra ${esc(r.letra)}</div>
+      ${r.completo && r.recompensa_texto ? `<div class="recompensa">${Desafio.textoRecompensa(r.recompensa_texto)}</div>` : ""}</div>`);
+    painel.prepend(sprite(r.desenho));
+  }
+
+  function quadro(ms) {
+    agora = ms;
+    desenharLago();
+    if (fase === "minijogo") rodarMinijogo();
+    const t = agora - t0;
+
+    let a = ultimo.a, d = 0, fim = null, curva = 0, boia = null, alerta = false;
+    switch (fase) {
+      case "parado": d = null; break;
+      case "lancando":
+        d = t < 450 ? 120 * (1 - freia(t / 450)) : 0;
+        a = anguloLancando(t);
+        if (t < 820) { const q = ponta(a, d); boia = { x: q.x, y: q.y + 6 }; }
+        else {
+          const s = limita((t - 820) / 480);
+          boia = { x: mistura(solta.x, ALVO.x, s), y: mistura(solta.y, ALVO.y, s) - 30 * Math.sin(Math.PI * s) };
+          if (s >= 1) { ondinha(ALVO.x, AGUA); ir("esperando"); }
+        }
+        break;
+      case "esperando": {
+        a = 52 + Math.sin(t / 650) * 1.2;
+        let y = ALVO.y + (Math.sin(t / 260) > .6 ? 1 : 0);
+        for (const antes of [1100, 550]) { const s = (t - mordida + antes) / 180; if (s > 0 && s < 1) y += 2; }
+        boia = { x: ALVO.x, y }; curva = 8;
+        if (erroPesca) { mensagem(esc(erroPesca)); ir("fugiu"); }
+        else if (t >= mordida && pescaria) { ondinha(ALVO.x, AGUA); ir("fisgou"); }
+        break;
+      }
+      case "fisgou":
+        a = 52 + 5 * freia(t / 300);
+        boia = { x: ALVO.x, y: ALVO.y + Math.round(3 * freia(t / 250)) };
+        alerta = true;
+        if (t > 1100) fugiu("Escapou! Aperte PUXAR assim que aparecer o <b>!</b>");
+        break;
+      case "minijogo": case "aguardando":
+        a = 57 + Math.sin(t / 70) * 2;
+        fim = { x: ALVO.x + Math.sin(t / 150) * 3, y: AGUA + 2 };
+        if (Math.floor(t / 450) !== Math.floor((t - 17) / 450)) ondinha(fim.x, AGUA);
+        break;
+      case "subindo": {
+        const s = suave(t / 900), balanco = Math.sin(t / 380);
+        a = mistura(57, 14, s) + (t > 900 ? Math.sin((t - 900) / 400) * 1.5 : 0);
+        const q = ponta(a, 0);
+        fim = { x: mistura(ALVO.x, q.x + balanco * 2, s), y: mistura(AGUA + 6, q.y + 12, s) };
+        if (t >= 900 && !presa.mostrado) { presa.mostrado = true; mostrar(presa.dados); }
+        if (t > 2600) { saida = { a }; ir("saindo"); }
+        break;
+      }
+      case "fugiu": {
+        const s = suave(t / 500), q = ponta(mistura(ultimo.a, 20, s), 0);
+        a = mistura(ultimo.a, 20, s);
+        boia = { x: mistura(ALVO.x, q.x, s), y: mistura(ALVO.y, q.y + 6, s) - 10 * Math.sin(Math.PI * s) };
+        if (t > 800) { saida = { a }; presa = null; ir("saindo"); }
+        break;
+      }
+      case "saindo": {
+        a = saida.a; d = 120 * suave(t / 550);
+        const q = ponta(a, d);
+        if (presa) fim = { x: q.x + Math.sin(t / 380) * 2, y: q.y + 12 }; else boia = { x: q.x, y: q.y + 6 };
+        if (t > 550) { presa = null; ir("parado"); d = null; }
+        break;
+      }
+    }
+    if (fase !== "fugiu") ultimo.a = a;
+
+    if (d !== null) {
+      const q = desenharVara(a, d);
+      const ponto_ = boia || fim;
+      if (ponto_) desenharLinha(q, ponto_, curva);
+      if (boia) desenharBoia(boia.x, boia.y);
+      if (presa && fim && (fase === "subindo" || fase === "saindo")) desenharPresa(presa, fim.x, fim.y);
+      if (alerta && boia) g.drawImage(ALERTA, Math.round(boia.x - 1), Math.round(ALVO.y - 13 - (Math.floor(t / 120) % 2)));
+    }
+    requestAnimationFrame(quadro);
+  }
+
+  // ================= MINIJOGO (igual ao do Stardew Valley) =================
+  // Medidas na mesma escala do jogo original: trilho de 568, barra de 120, peixe de 0 a 532.
+  // A física roda 60 vezes por segundo, como lá.
+  const ALT = 568, BARRA = 120, cb = $("barra"), gb = cb.getContext("2d"), caixa = $("minijogo");
+  const TRILHO = { x: 4, y: 4, w: 16, h: 144 }, ESC = TRILHO.h / ALT;
+  let mj = null, segurando = false;
+
+  function iniciarMinijogo(dificuldade, movimento) {
+    mj = { dif: dificuldade, mov: { misto: 0, disparo: 1, suave: 2, afunda: 3, flutua: 4 }[movimento] ?? 0,
+           barra: ALT - BARRA, vb: 0, peixe: 430, vp: 0, alvo: -1, fs: 0, prog: .3, dentro: false,
+           ticks: 0, sobra: 0, antes: performance.now(), acabou: false };
+    segurando = false;
+    caixa.hidden = false;
+  }
+
+  function tique() {
+    const m = mj, d = m.dif;
+    // o peixe escolhe um novo destino de vez em quando (mais vezes quanto mais difícil)
+    if (Math.random() < d * (m.mov === 2 ? 20 : 1) / 4000 && (m.mov !== 2 || m.alvo === -1)) {
+      const abaixo = 548 - m.peixe, acima = m.peixe, pct = Math.min(99, d + inteiro(10, 45)) / 100;
+      m.alvo = m.peixe + inteiro(Math.min(-acima, abaixo), abaixo) * pct;
+    }
+    if (m.mov === 4) m.fs = Math.max(m.fs - .01, -1.5);        // flutua: puxa para cima
+    else if (m.mov === 3) m.fs = Math.min(m.fs + .01, 1.5);    // afunda: puxa para baixo
+    if (Math.abs(m.peixe - m.alvo) > 3 && m.alvo !== -1) {
+      const acel = (m.alvo - m.peixe) / (inteiro(10, 30) + (100 - Math.min(100, d)));
+      m.vp += (acel - m.vp) / 5;
+    } else if (m.mov !== 2 && Math.random() < d / 2000) {
+      m.alvo = m.peixe + (Math.random() < .5 ? inteiro(-100, -51) : inteiro(50, 101));
+    } else m.alvo = -1;
+    if (m.mov === 1 && Math.random() < d / 1000)                // disparo: trancos bruscos
+      m.alvo = m.peixe + (Math.random() < .5 ? inteiro(-100 - d * 2, -51) : inteiro(50, 101 + d * 2));
+    m.alvo = Math.max(-1, Math.min(m.alvo, 548));
+    m.peixe = limita(m.peixe + m.vp + m.fs, 0, 532);
+
+    // a barra: segurando sobe, soltando cai; quica no fundo
+    m.dentro = m.peixe + 8 >= m.barra && m.peixe + 24 <= m.barra + BARRA;
+    let gr = segurando ? -.25 : .25;
+    if (segurando && (m.barra === 0 || m.barra === ALT - BARRA)) m.vb = 0;
+    if (m.dentro) gr *= .6;
+    m.vb += gr; m.barra += m.vb;
+    if (m.barra + BARRA > ALT) { m.barra = ALT - BARRA; m.vb = -m.vb * 2 / 3; }
+    else if (m.barra < 0) { m.barra = 0; m.vb = 0; }
+
+    // progresso: enche com o peixe dentro da barra, esvazia fora (meio segundo de "preparar" no começo)
+    if (++m.ticks > 30) m.prog = limita(m.prog + (m.dentro ? .002 : -.003));
+  }
+
+  function rodarMinijogo() {
+    const m = mj;
+    if (!m || m.acabou) return;
+    const ms = performance.now();
+    m.sobra += Math.min(250, ms - m.antes); m.antes = ms;
+    while (m.sobra >= 1000 / 60 && !m.acabou) {
+      m.sobra -= 1000 / 60;
+      tique();
+      if (m.prog >= 1 || m.prog <= 0) m.acabou = true;
+    }
+    desenharBarra();
+    if (!m.acabou) return;
+    setTimeout(() => { caixa.hidden = true; segurando = false; }, 250);
+    if (m.prog <= 0) return fugiu("O peixe fugiu! Tente de novo.");
+    ir("aguardando");
+    const id = pescaria.id;
+    pescaria = null;
+    rpc("pesca_puxar", { p_id: id, p_pegou: true }).then(r => {
+      if (r.status !== "pegou") return fugiu("A linha arrebentou! Tente de novo.");
+      presa = { ...folha(r.desenho, true), dados: r, mostrado: false };
+      ondinha(ALVO.x, AGUA);
+      ir("subindo");
+    }).catch(() => fugiu("Falha na conexão: o peixe escapou."));
+  }
+
+  function desenharBarra() {
+    const m = mj, k = gb;
+    k.fillStyle = "#3a2312"; k.fillRect(0, 0, cb.width, cb.height);
+    k.fillStyle = "#a0703f"; k.fillRect(1, 1, cb.width - 2, cb.height - 2);
+    k.fillStyle = "#6b4423"; k.fillRect(2, 2, cb.width - 4, cb.height - 4);
+    // trilho com água
+    for (let y = 0; y < TRILHO.h; y++) {
+      k.fillStyle = y < TRILHO.h * .5 ? "#1f6fc4" : y < TRILHO.h * .8 ? "#1a5aa6" : "#154a8c";
+      k.fillRect(TRILHO.x, TRILHO.y + y, TRILHO.w, 1);
+    }
+    // barra verde
+    const by = Math.round(TRILHO.y + m.barra * ESC), bh = Math.round(BARRA * ESC);
+    k.fillStyle = m.dentro ? "#5cf08a" : "#2fa45a"; k.fillRect(TRILHO.x + 1, by, TRILHO.w - 2, bh);
+    k.fillStyle = m.dentro ? "#b5ffcb" : "#5fd087"; k.fillRect(TRILHO.x + 1, by, TRILHO.w - 2, 1);
+    k.fillStyle = "#15803d"; k.fillRect(TRILHO.x + 1, by + bh - 1, TRILHO.w - 2, 1);
+    // peixe (treme quando está dentro da barra)
+    const tremor = m.dentro ? inteiro(-1, 2) : 0;
+    k.drawImage(SOMBRA, TRILHO.x + 4 + tremor, Math.round(TRILHO.y + m.peixe * ESC) + (m.dentro ? inteiro(-1, 2) : 0));
+    // progresso
+    k.fillStyle = "#2a170c"; k.fillRect(24, 4, 8, TRILHO.h);
+    const ph = Math.round(m.prog * (TRILHO.h - 2));
+    k.fillStyle = `hsl(${Math.round(m.prog * 120)} 85% 50%)`; k.fillRect(25, 4 + TRILHO.h - 1 - ph, 6, ph);
+  }
+
+  // controles do minijogo: segurar o mouse/dedo ou o espaço
+  caixa.addEventListener("pointerdown", e => { segurando = true; e.preventDefault(); });
+  addEventListener("pointerup", () => { segurando = false; });
+  addEventListener("pointercancel", () => { segurando = false; });
+  addEventListener("blur", () => { segurando = false; });
+  const TECLAS = [" ", "ArrowUp", "w", "W"];
+  addEventListener("keydown", e => {
+    if (!TECLAS.includes(e.key)) return;
+    if (fase === "minijogo") { segurando = true; e.preventDefault(); }
+    else if (fase === "fisgou") { puxarLinha(); e.preventDefault(); }
+    else if (fase === "parado" && e.key === " " && document.activeElement !== botao) { pescar(); e.preventDefault(); }
+    else if (fase !== "parado") e.preventDefault();
+  });
+  addEventListener("keyup", e => {
+    if (!TECLAS.includes(e.key)) return;
+    segurando = false;
+    if (fase !== "parado") e.preventDefault();
+  });
+  botao.addEventListener("click", () => fase === "fisgou" ? puxarLinha() : pescar());
+  cv.addEventListener("pointerdown", () => { if (fase === "fisgou") puxarLinha(); });
+
+  // ================= ÍNDICE =================
+  let numeros = [], pegos = {};
+  const grade = $("grade");
+  function desenharIndice(destaque) {
+    grade.innerHTML = "";
+    for (const n of numeros) {
+      const p = pegos[n];
+      const carta = document.createElement("article");
+      carta.className = "carta px" + (p ? " pego" : "") + (n === destaque ? " brilha" : "");
+      carta.innerHTML = `<div class="topo"><span class="num">#${esc(n)}</span><span class="letra">${p ? esc(p.letra) : "?"}</span></div>
+        <div class="figura">${p ? "" : `<span class="interroga">?</span>`}</div>
+        <div class="nome">${p ? esc(p.nome) : "???"}</div>
+        ${p ? `<div class="vezes">pescado ${esc(p.vezes)}x</div>` : ""}`;
+      if (p) carta.querySelector(".figura").append(sprite(p.desenho));
+      grade.append(carta);
+    }
+    $("contagem").textContent = numeros.length ? `${Object.keys(pegos).length}/${numeros.length}` : "";
+  }
+
+  function avisar(texto, link) {
+    const a = $("aviso");
+    a.innerHTML = `<div>${esc(texto)}</div>${link ? `<a href="/">Ir para o site</a>` : ""}`;
+    a.hidden = false;
+    mensagem(esc(texto));
+  }
+
+  requestAnimationFrame(quadro);
+  (async () => {
+    try {
+      const sessao = await Desafio.sessao();
+      if (!sessao) return avisar("Entre na sua conta no site para pescar.", true);
+      const r = await rpc("pesca_indice");
+      if (!r.aberto) return avisar("A área de pesca está fechada por enquanto.");
+      numeros = r.numeros;
+      for (const p of r.pegos) pegos[p.numero] = p;
+      desenharIndice();
+      pronto = true;
+      atualizarBotao();
+      if (r.completo && r.recompensa_texto)
+        mensagem(`<div><div class="t1">Você já pegou todos os peixes!</div><div class="recompensa">${Desafio.textoRecompensa(r.recompensa_texto)}</div></div>`);
+      else mensagem("Aperte PESCAR para jogar a linha.");
+    } catch (e) {
+      avisar("Falha na conexão. Recarregue a página.");
+    }
+  })();
+})();
+</script>
+</body>
+</html>
