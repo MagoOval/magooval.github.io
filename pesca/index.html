@@ -222,14 +222,19 @@
       k.fillStyle = "#3f78b8"; k.fillRect(x, topo, 1, 1);
     }
     faixas(["#2a7fd0", "#2370c0", "#1d62b0", "#18559e", "#13498c", "#0f3e7a"], AGUA, H);
-    // píer
-    k.fillStyle = "#4a2e17"; k.fillRect(150, 92, 42, 20);
-    k.fillStyle = "#8a5a32"; k.fillRect(150, 92, 42, 4);
+  })();
+
+  // píer: 7 tábuas iguais de 6 pixels; fica numa camada própria, por cima das ondas
+  const pier = document.createElement("canvas");
+  pier.width = W; pier.height = H;
+  (() => {
+    const k = pier.getContext("2d");
     k.fillStyle = "#a8743f"; k.fillRect(150, 92, 42, 1);
+    k.fillStyle = "#8a5a32"; k.fillRect(150, 93, 42, 3);
     k.fillStyle = "#6b4423"; k.fillRect(150, 96, 42, 16);
     k.fillStyle = "#4a2e17";
-    for (let x = 150; x < W; x += 7) k.fillRect(x, 96, 1, 16);
-    k.fillStyle = "#3a2312"; k.fillRect(153, 96, 3, 16); k.fillRect(184, 96, 3, 16);
+    k.fillRect(150, 96, 42, 1);
+    for (let x = 150; x < W; x += 6) k.fillRect(x, 92, 1, 20);
   })();
 
   const NUVENS = [{ x: 60, y: 14, v: 1 / 420, f: [[0, 4, 24, 4], [4, 1, 10, 4], [12, 0, 8, 5], [18, 2, 5, 3]] },
@@ -265,6 +270,7 @@
       }
       g.globalAlpha = 1;
     }
+    g.drawImage(pier, 0, 0);
   }
 
   function desenharVara(a, d) {
