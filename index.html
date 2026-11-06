@@ -279,6 +279,7 @@
     color: var(--text); box-shadow: var(--shadow); transition: transform .15s;
   }
   button.tile:hover { transform: translateY(-2px); }
+  .tile.locked.sombra-viva { cursor: pointer; }
   .tile .num { font-size: .75rem; color: var(--muted); font-weight: 600; }
   .tile .name { font-weight: 600; font-size: .95rem; line-height: 1.25; }
   .tile .meta { font-size: .8rem; color: var(--muted); }
@@ -775,9 +776,15 @@
     return m;
   }
 
+  // Ovo da sombra: enquanto está bloqueado, a sombra dele tem um "?" e pode ser tocada
+  const OVO_DA_SOMBRA = 17;
+  const ehSombraViva = o => !achou(o) && o.numero === OVO_DA_SOMBRA;
+  const SOMBRA_INTERROGACAO = "sombra-ovo-17.png";   // fica junto do index.html, no GitHub
+
   // Imagem do ovo: descoberto → imagem dele; não descoberto → sombra; sem arquivo → vazio
   function figura(o, grande = false) {
     const cls = "pic" + (grande ? " big" : "");
+    if (ehSombraViva(o)) return `<div class="${cls}"><img src="${SOMBRA_INTERROGACAO}" alt=""></div>`;
     if (achou(o) && o.imagemUrl) return `<div class="${cls}"><img src="${esc(o.imagemUrl)}" alt=""></div>`;
     if (!achou(o) && o.sombraUrl) return `<div class="${cls}"><img class="sombra" src="${esc(o.sombraUrl)}" alt=""></div>`;
     return `<div class="${cls}"></div>`;
@@ -1196,6 +1203,13 @@
 
   // ---- Tela 2: Ovos ----
   function cartaoOvo(o) {
+    if (ehSombraViva(o)) {
+      return `<button class="tile locked sombra-viva" aria-label="Ovo ${num(o)}, ainda não descoberto">
+           ${figura(o)}
+           <span class="num">${num(o)}</span>
+           <span class="name">???</span>
+         </button>`;
+    }
     return achou(o)
       ? `<button class="tile" data-n="${o.numero}">
            ${figura(o)}
@@ -1262,7 +1276,22 @@
     document.querySelectorAll("[data-limpar]").forEach(b => b.onclick = () => { filtroCategoria.clear(); render(); });
     const limparTudo = document.getElementById("limpar-tudo");
     if (limparTudo) limparTudo.onclick = () => { filtroCategoria.clear(); render(); };
-    document.querySelectorAll("button.tile").forEach(b => b.onclick = () => telaDetalhe(ovos.find(o => o.numero === +b.dataset.n)));
+    document.querySelectorAll("button.tile[data-n]").forEach(b => b.onclick = () => telaDetalhe(ovos.find(o => o.numero === +b.dataset.n)));
+    document.querySelectorAll("button.sombra-viva").forEach(b => b.onclick = () => tocarSombra(b));
+  }
+
+  // Tocou na sombra do ovo: quem desbloqueia é o Supabase
+  async function tocarSombra(botao) {
+    botao.disabled = true;
+    try {
+      const { data, error } = await sb.rpc("tocar_sombra");
+      if (error) throw error;
+      await carregarOvos();
+      const ovo = ovos.find(o => o.numero === data.numero);
+      if (ovo && achou(ovo)) return telaDetalhe(ovo, data.status === "novo");
+    } catch { /* avisa abaixo */ }
+    botao.disabled = false;
+    botao.querySelector(".name").textContent = "Tente de novo";
   }
 
   // ---- Detalhe de um ovo descoberto ----
