@@ -188,7 +188,7 @@
 
   /* Lista de pistas (estilo Reddit) */
   .pistas-wrap { max-width: 760px; margin: 0 auto; }
-  .pistas-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .pistas-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
   .pistas-head h2 { margin: 0; }
   /* cada pista é um cartão separado, com espaço entre eles */
   .pistas { display: flex; flex-direction: column; gap: 14px; }
@@ -212,9 +212,12 @@
   /* dificuldade da pista: fica entre a data e o título, no mesmo formato das categorias dos ovos */
   .pista-dif { display: flex; margin: 6px 0 2px; }
   .pista-dif .tag { color: #1b1712; }
-  .tag.dif-facil   { background: #5cd67e; }
-  .tag.dif-medio   { background: #f5a623; }
-  .tag.dif-dificil { background: #e5484d; color: #ffffff; }
+  .pista-dif .tag.dif-dificil { color: #ffffff; }
+  /* as mesmas cores servem para a etiqueta e para a bolinha do filtro */
+  .dif-facil   { background: #5cd67e; }
+  .dif-medio   { background: #f5a623; }
+  .dif-dificil { background: #e5484d; }
+  .pistas-filtro { margin-bottom: 12px; }
   .pista-titulo { font-weight: 700; font-size: 1.1rem; line-height: 1.3; margin: 4px 0; padding-right: 14px; }
   .pista-desc {
     color: var(--muted); font-size: .92rem; margin-bottom: 6px;
@@ -576,6 +579,8 @@
   let pistas = [];                   // vem do banco: [{ id, titulo, descricao, ..., vista }]
   // Ordem das pistas: "antigas" (padrão) ou "novas". Lembrada neste aparelho, se possível.
   let ordemPistas = (() => { try { return localStorage.getItem("ordemPistas") === "novas" ? "novas" : "antigas"; } catch { return "antigas"; } })();
+  let filtroDif = new Set();         // dificuldades marcadas no filtro das pistas ("facil", "medio", "dificil")
+  let mostrarFiltrosPistas = false;
 
   const achou = o => !!o.encontrado_em;
   const num = o => "#" + String(o.numero).padStart(2, "0");
@@ -646,7 +651,7 @@
         </div>
         ${lista.length
           ? `<div class="slicer-items">${lista.map(op =>
-              `<button class="slicer-item" data-tipo="${tipo}" data-valor="${esc(op.chave)}" aria-pressed="${marcados.has(op.chave)}">${tipo === "c" ? pontoCor(op.chave) : ""}${esc(op.rotulo)}</button>`).join("")}</div>`
+              `<button class="slicer-item" data-tipo="${tipo}" data-valor="${esc(op.chave)}" aria-pressed="${marcados.has(op.chave)}">${tipo === "c" ? pontoCor(op.chave) : tipo === "d" ? `<span class="cor-dot dif-${esc(op.chave)}"></span>` : ""}${esc(op.rotulo)}</button>`).join("")}</div>`
           : `<p class="slicer-vazio">${vazio}</p>`}
       </div>`;
   }
@@ -771,9 +776,10 @@
 
   // Etiqueta de dificuldade da pista (o banco guarda "facil", "medio" ou "dificil")
   const DIFICULDADES = { facil: "Fácil", medio: "Médio", dificil: "Difícil" };
+  const difDe = p => { const d = norm(p.dificuldade); return DIFICULDADES[d] ? d : null; };
   function dificuldadePista(p) {
-    const d = String(p.dificuldade ?? "").trim().toLowerCase();
-    return DIFICULDADES[d] ? `<div class="pista-dif"><span class="tag dif-${d}">${DIFICULDADES[d]}</span></div>` : "";
+    const d = difDe(p);
+    return d ? `<div class="pista-dif"><span class="tag dif-${d}">${DIFICULDADES[d]}</span></div>` : "";
   }
 
   function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -945,6 +951,7 @@
     await sb.auth.signOut();
     sessao = null; ovos = []; modo = "entrar"; aba = "senha";
     filtroCategoria.clear(); mostrarFiltros = false;
+    filtroDif.clear(); mostrarFiltrosPistas = false;
     pistas = []; coresCat = new Map();
     telaLogin(msg, tipo);
   }
@@ -1418,20 +1425,42 @@
 
   function telaPistas() {
     const sentido = ordemPistas === "novas" ? -1 : 1;
-    const ordenadas = [...pistas].sort((a, b) =>
-      sentido * ((new Date(a.publicada_em) - new Date(b.publicada_em)) || (a.id - b.id)));
+    // Filtro de dificuldade: só aparecem as dificuldades que alguma pista tem, na ordem Fácil → Difícil
+    const difs = Object.keys(DIFICULDADES).filter(d => pistas.some(p => difDe(p) === d))
+      .map(d => ({ chave: d, rotulo: DIFICULDADES[d] }));
+    [...filtroDif].forEach(k => { if (!difs.some(op => op.chave === k)) filtroDif.delete(k); });
+    const n = filtroDif.size;
+    const ordenadas = [...pistas]
+      .filter(p => !n || filtroDif.has(difDe(p)))
+      .sort((a, b) => sentido * ((new Date(a.publicada_em) - new Date(b.publicada_em)) || (a.id - b.id)));
     app.innerHTML = topo() + `
       <div class="pistas-wrap">
         <div class="pistas-head">
           <h2>Pistas</h2>
-          ${pistas.length > 1 ? `<button class="btn-filtros" id="ordem" title="Inverter a ordem">
-            ⇅ ${ordemPistas === "novas" ? "Mais novas primeiro" : "Mais antigas primeiro"}</button>` : ""}
+          ${pistas.length ? `<div class="filter-actions">
+            <button class="btn-filtros ${n ? "ativo" : ""}" id="bf-pistas" aria-expanded="${mostrarFiltrosPistas}">${ICONE_FUNIL} Filtros${n ? ` (${n})` : ""}</button>
+            ${pistas.length > 1 ? `<button class="btn-filtros" id="ordem" title="Inverter a ordem">
+              ⇅ ${ordemPistas === "novas" ? "Mais novas primeiro" : "Mais antigas primeiro"}</button>` : ""}
+          </div>` : ""}
         </div>
-        ${pistas.length
-          ? `<div class="pistas">${ordenadas.map(cartaoPista).join("")}</div>`
-          : `<div class="card empty">Nenhuma pista por enquanto. Volte mais tarde!</div>`}
+        ${mostrarFiltrosPistas && pistas.length ? `
+          <div class="slicers pistas-filtro">
+            ${painel("Dificuldade", "d", difs, filtroDif, "Nenhuma pista tem dificuldade ainda.")}
+          </div>` : ""}
+        ${!pistas.length
+          ? `<div class="card empty">Nenhuma pista por enquanto. Volte mais tarde!</div>`
+          : ordenadas.length
+            ? `<div class="pistas">${ordenadas.map(cartaoPista).join("")}</div>`
+            : `<div class="card empty">Nenhuma pista com essa dificuldade.</div>`}
       </div>`;
     ligarTopo();
+    const botaoFiltros = document.getElementById("bf-pistas");
+    if (botaoFiltros) botaoFiltros.onclick = () => { mostrarFiltrosPistas = !mostrarFiltrosPistas; render(); };
+    document.querySelectorAll('.slicer-item[data-tipo="d"]').forEach(b => b.onclick = () => {
+      filtroDif.has(b.dataset.valor) ? filtroDif.delete(b.dataset.valor) : filtroDif.add(b.dataset.valor);
+      render();
+    });
+    document.querySelectorAll('[data-limpar="d"]').forEach(b => b.onclick = () => { filtroDif.clear(); render(); });
     const botaoOrdem = document.getElementById("ordem");
     if (botaoOrdem) botaoOrdem.onclick = () => {
       ordemPistas = ordemPistas === "novas" ? "antigas" : "novas";
