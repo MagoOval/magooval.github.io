@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<title>Ovo Potter</title>
+<link rel="icon" href="../favicon.ico" sizes="any">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="../desafio.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noite: #0b0f1c; --texto: #f3ebde; --apagado: #a9a08f; --linha: #3a3a52;
+    --ouro: #f2c14e; --verde: #4dff7a; --vermelho: #ff5a4a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    min-height: 100vh; min-height: 100dvh; overflow-x: hidden; color: var(--texto);
+    background: radial-gradient(120% 80% at 50% 0%, #1a2340 0%, var(--noite) 60%) fixed var(--noite);
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .tela {
+    min-height: 100vh; min-height: 100dvh; padding: 24px 16px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px; text-align: center;
+  }
+  .tela[hidden] { display: none; }
+  h1 { margin: 0; font: 700 clamp(1.25rem, 5vw, 1.9rem)/1.25 "Cinzel", Georgia, serif; letter-spacing: .02em; max-width: 24em; text-wrap: balance; }
+
+  /* ---- tela do feitiço ---- */
+  #ovo { width: min(60vw, 260px); height: auto; filter: drop-shadow(0 0 28px rgba(242, 193, 78, .18)); }
+  #ovo-fim { width: min(44vw, 180px); height: auto; transform: rotate(82deg); filter: grayscale(1) brightness(.6); }
+  form { display: flex; gap: 10px; width: min(100%, 420px); }
+  #feitico {
+    flex: 1; min-width: 0; font: inherit; color: var(--texto); background: #141a2c; text-align: center;
+    border: 1px solid var(--linha); border-radius: 10px; padding: 12px 14px;
+  }
+  #feitico:focus-visible { outline: 2px solid var(--ouro); outline-offset: 2px; }
+  button {
+    font: 700 1rem/1 "Cinzel", Georgia, serif; letter-spacing: .04em; color: #1b1712; background: var(--ouro);
+    border: 0; border-radius: 10px; padding: 13px 20px; cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  button:focus-visible { outline: 2px solid var(--texto); outline-offset: 3px; }
+  #nota { margin: 0; min-height: 1.5em; color: var(--apagado); }
+  #nota.erro { color: var(--vermelho); }
+  #nota a { color: inherit; }
+  #ganhou { margin: 0; max-width: 22em; color: var(--apagado); }
+  #ganhou[hidden] { display: none; }
+  .destaque {
+    /* letra comum de propósito: a Cinzel desenha minúsculas como maiúsculas e confundiria a senha */
+    display: inline-block; font: 700 1.5em/1.3 ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; color: var(--ouro);
+    overflow-wrap: anywhere; letter-spacing: .03em;
+    user-select: all; -webkit-user-select: all;
+  }
+
+  /* ---- duelo ---- */
+  #duelo { gap: 14px; padding: 12px 0 20px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  #arena { display: block; width: 100%; max-width: 960px; aspect-ratio: 2 / 1; touch-action: manipulation; }
+  #atacar {
+    width: min(86vw, 340px); padding: 24px 20px; font-size: 1.5rem; border-radius: 16px; touch-action: manipulation;
+    color: #06200f; background: var(--verde); box-shadow: 0 0 28px rgba(77, 255, 122, .35), 0 6px 0 #1c8f45;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #atacar.apertado { transform: translateY(4px); box-shadow: 0 0 34px rgba(77, 255, 122, .55), 0 2px 0 #1c8f45; }
+  #atacar:disabled { box-shadow: none; }
+  #dica { margin: 0; min-height: 1.5em; color: var(--apagado); padding: 0 16px; }
+  @media (max-width: 620px) { #arena { aspect-ratio: 4 / 3; } }
+
+  /* ---- vitória ---- */
+  #recompensa { margin: 0; max-width: 20em; font-size: 1.15rem; white-space: pre-line; }
+  #recompensa .destaque { margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<main id="inicio" class="tela">
+  <img id="ovo" src="ovo-potter.png" alt="Ovo Potter: um ovo de óculos redondos, cicatriz de raio e cachecol vermelho e amarelo" width="512" height="512">
+  <h1>Mate o Ovo Potter usando o feitiço.</h1>
+  <form id="form" autocomplete="off">
+    <input id="feitico" type="text" maxlength="60" aria-label="Feitiço" placeholder="Digite o feitiço"
+           autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" disabled>
+    <button id="lancar" type="submit" disabled>Lançar</button>
+  </form>
+  <p id="nota" aria-live="polite"></p>
+  <p id="ganhou" hidden></p>
+</main>
+
+<main id="duelo" class="tela" hidden>
+  <canvas id="arena" aria-label="Duelo de feitiços contra o Ovo Potter"></canvas>
+  <button id="atacar" type="button" disabled>ATACAR!</button>
+  <p id="dica" aria-live="polite"></p>
+</main>
+
+<main id="fim" class="tela" hidden>
+  <img id="ovo-fim" src="ovo-potter.png" alt="" width="512" height="512">
+  <h1>O Ovo Potter caiu.</h1>
+  <p id="recompensa" aria-live="polite"></p>
+</main>
+
+<script>
+(() => {
+  const SLUG = "potter";                 // apelido do desafio no Supabase
+  // O feitiço e a senha NÃO ficam nesta página: quem confere e quem entrega é o Supabase.
+
+  const $ = id => document.getElementById(id);
+  const telas = { inicio: $("inicio"), duelo: $("duelo"), fim: $("fim") };
+  const nota = $("nota"), campo = $("feitico"), btLancar = $("lancar"), btAtacar = $("atacar"), dica = $("dica");
+  const rpc = async (nome, args) => {
+    const { data, error } = await Desafio.sb.rpc(nome, args);
+    if (error) throw error;
+    return data;
+  };
+  const mostrar = nome => { for (const k in telas) telas[k].hidden = k !== nome; window.scrollTo(0, 0); };
+  const avisar = (texto, erro) => { nota.textContent = texto; nota.classList.toggle("erro", !!erro); };
+
+  // =====================================================================
+  //  Tela do feitiço
+  // =====================================================================
+  let enviando = false;
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const texto = campo.value.trim();
+    if (!texto || enviando) return;
+    enviando = true; btLancar.disabled = true; avisar("");
+    try {
+      const r = await rpc("potter_lancar", { p_feitico: texto });
+      if (r.status === "certo") { campo.value = ""; comecarDuelo(r.id, r.forca); }
+      else if (r.status === "errado") avisar("Não surtiu efeito.", true);
+      else if (r.status === "aguarde") avisar("Feitiços demais. Espere um minuto e tente de novo.", true);
+      else avisar("Esta página ainda não abriu.");
+    } catch (err) {
+      avisar("Falha na conexão. Tente de novo.", true);
+    }
+    enviando = false; btLancar.disabled = false;
+  });
+
+  // =====================================================================
+  //  Duelo
+  // =====================================================================
+  const cv = $("arena"), g = cv.getContext("2d");
+  const imgOvo = new Image(); imgOvo.src = "ovo-potter.png";
+  const imgMago = new Image(); imgMago.src = "ovo-mago.png";
+
+  const TOQUE = 0.02;            // quanto cada toque empurra o raio (o caminho todo vale 1)
+  const INTERVALO = 90;          // ms mínimos entre dois toques contados
+  let duelo = null;              // estado do duelo em andamento
+  let W = 800, H = 400, S = 1;   // tamanho lógico do desenho
+  const estrelas = Array.from({ length: 70 }, () => ({ x: Math.random(), y: Math.random() * .62, r: Math.random() * 1.3 + .3, f: Math.random() * 6 }));
+
+  function ajustarTela() {
+    const r = cv.getBoundingClientRect();
+    if (!r.width) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    W = 800; H = 800 * r.height / r.width; S = r.width < 620 ? 1.3 : 1;
+    g.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
+  }
+  addEventListener("resize", ajustarTela);
+
+  function comecarDuelo(id, forca) {
+    duelo = {
+      id, forca: Math.max(1, Math.min(100, Number(forca) || 60)),
+      fase: "abertura",          // abertura → luta → vitoria | derrota
+      t: 0, tFase: 0, p: 0, ultimoToque: 0, soco: 0, clarao: 0, corClarao: "77,255,122",
+      queda: 0, faiscas: [], resposta: null, antes: performance.now(),
+    };
+    mostrar("duelo");
+    btAtacar.disabled = true;
+    dica.textContent = "O feitiço acertou... e o Ovo Potter revidou!";
+    ajustarTela();
+    requestAnimationFrame(quadro);
+  }
+
+  function atacar() {
+    if (!duelo || duelo.fase !== "luta") return;
+    const agora = performance.now();
+    if (agora - duelo.ultimoToque < INTERVALO) return;
+    duelo.ultimoToque = agora;
+    duelo.p += TOQUE;
+    duelo.soco = 1;
+  }
+  const apertar = e => { e.preventDefault(); btAtacar.classList.add("apertado"); atacar(); };
+  const soltar = () => btAtacar.classList.remove("apertado");
+  btAtacar.addEventListener("pointerdown", apertar);
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); atacar(); });
+  addEventListener("pointerup", soltar);
+  addEventListener("pointercancel", soltar);
+  btAtacar.addEventListener("click", e => e.preventDefault());
+  btAtacar.addEventListener("contextmenu", e => e.preventDefault());
+  addEventListener("keydown", e => {
+    if (!duelo || telas.duelo.hidden) return;
+    if (e.code !== "Space" && e.code !== "Enter") return;
+    e.preventDefault();
+    if (e.repeat) return;        // segurar a tecla não vale: tem que apertar várias vezes
+    btAtacar.classList.add("apertado"); atacar();
+  });
+  addEventListener("keyup", soltar);
+
+  // força com que o Ovo Potter empurra o raio de volta (por segundo): cresce perto dele
+  const empurrao = d => (0.03 + 0.08 * d.p) * (d.forca / 60) * (1 + 0.22 * Math.sin(d.t * 1.7));
+
+  async function terminar(venceu) {
+    const d = duelo;
+    d.fase = venceu ? "vitoria" : "derrota"; d.tFase = 0;
+    d.clarao = 1; d.corClarao = venceu ? "77,255,122" : "255,90,74";
+    btAtacar.disabled = true; soltar();
+    dica.textContent = venceu ? "" : "O Ovo Potter venceu o duelo.";
+    try { d.resposta = await rpc("potter_fim", { p_id: d.id, p_venceu: venceu }); }
+    catch (err) { d.resposta = { status: "falha" }; }
+  }
+
+  function sairDoDuelo() {
+    const d = duelo; duelo = null;
+    if (d.fase === "vitoria" && d.resposta.status === "venceu") {
+      $("recompensa").innerHTML = Desafio.textoRecompensa(d.resposta.recompensa_texto);
+      mostrar("fim");
+      return;
+    }
+    mostrar("inicio");
+    if (d.fase === "derrota") avisar("O Ovo Potter venceu o duelo. Lance o feitiço de novo.", true);
+    else if (d.resposta.status === "falha") avisar("Falha na conexão no fim do duelo. Lance o feitiço de novo.", true);
+    else avisar("O feitiço se desfez antes da hora. Lance de novo.", true);
+    campo.focus({ preventScroll: true });
+  }
+
+  function quadro(agora) {
+    const d = duelo;
+    if (!d) return;
+    const dt = Math.min(0.05, (agora - d.antes) / 1000);
+    d.antes = agora; d.t += dt; d.tFase += dt;
+    d.soco = Math.max(0, d.soco - dt * 6);
+    d.clarao = Math.max(0, d.clarao - dt * 1.6);
+
+    if (d.fase === "abertura") {
+      // 0 a 0,45 s: o raio verde voa até o ovo; depois o ovo revida até o meio
+      if (d.tFase < 0.45) d.p = d.tFase / 0.45;
+      else if (d.tFase < 1.5) { d.p = 1 - 0.5 * Math.min(1, (d.tFase - 0.45) / 0.9); if (d.clarao < .05 && d.tFase < .55) d.clarao = .8; }
+      else { d.fase = "luta"; d.tFase = 0; d.p = 0.5; btAtacar.disabled = false; dica.textContent = "Aperte sem parar para empurrar o raio!"; }
+    } else if (d.fase === "luta") {
+      d.p -= empurrao(d) * dt;
+      if (d.p >= 1) { d.p = 1; terminar(true); }
+      else if (d.p <= 0) { d.p = 0; terminar(false); }
+    } else {
+      d.queda = Math.min(1, d.tFase / 0.9);
+      if (d.tFase > 1.9 && d.resposta) { desenhar(d); return sairDoDuelo(); }
+    }
+    desenhar(d);
+    requestAnimationFrame(quadro);
+  }
+
+  // ---------------------------------------------------------------------
+  //  Desenho
+  // ---------------------------------------------------------------------
+  function raio(x1, y1, x2, y2, cor, grossura) {
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    if (dist < 4) return;
+    const n = Math.max(2, Math.round(dist / 24)), nx = -(y2 - y1) / dist, ny = (x2 - x1) / dist;
+    const pts = [];
+    for (let i = 0; i <= n; i++) {
+      const k = i / n, j = (i === 0 || i === n) ? 0 : (Math.random() - .5) * 20 * S;
+      pts.push([x1 + (x2 - x1) * k + nx * j, y1 + (y2 - y1) * k + ny * j]);
+    }
+    const traco = (largura, estilo, brilho) => {
+      g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]));
+      g.lineWidth = largura; g.strokeStyle = estilo; g.shadowColor = cor; g.shadowBlur = brilho; g.stroke();
+    };
+    g.save(); g.lineJoin = "round"; g.lineCap = "round"; g.globalCompositeOperation = "lighter";
+    g.globalAlpha = .35; traco(grossura * 3, cor, 26);
+    g.globalAlpha = 1;   traco(grossura, cor, 16);
+    traco(grossura * .4, "#ffffff", 6);
+    g.restore();
+  }
+
+  // o jogador é o ovo mago; o raio sai da ponta do cajado dele
+  const T_MAGO = 190, CAJADO = [0.164, -0.397];   // tamanho do desenho e posição da ponta do cajado dentro dele
+  function bruxo(x, chao, queda) {
+    const t = T_MAGO * S;
+    g.save(); g.translate(x, chao); g.rotate(-queda * Math.PI / 2 * .9);
+    if (queda > 0 && "filter" in g) g.filter = `grayscale(${queda}) brightness(${1 - .4 * queda})`;
+    if (imgMago.complete && imgMago.naturalWidth) g.drawImage(imgMago, -t / 2, -t * .95, t, t);
+    g.restore();
+  }
+
+  function ovoPotter(x, chao, queda) {
+    const t = 150 * S;
+    g.save(); g.translate(x, chao); g.rotate(queda * Math.PI / 2 * .9);
+    if (queda > 0 && "filter" in g) g.filter = `grayscale(${queda}) brightness(${1 - .4 * queda})`;
+    if (imgOvo.complete && imgOvo.naturalWidth) g.drawImage(imgOvo, -t / 2, -t * .97, t, t);
+    if (queda > 0) {            // rachaduras
+      g.filter = "none"; g.globalAlpha = Math.min(1, queda * 2); g.strokeStyle = "#0a0812"; g.lineWidth = 2.5 * S; g.lineJoin = "round";
+      g.beginPath();
+      g.moveTo(-t * .05, -t * .9); g.lineTo(t * .02, -t * .78); g.lineTo(-t * .06, -t * .7); g.lineTo(t * .03, -t * .6);
+      g.moveTo(t * .02, -t * .78); g.lineTo(t * .14, -t * .74); g.lineTo(t * .18, -t * .64);
+      g.stroke();
+    }
+    g.restore();
+    // a varinha do ovo flutua na frente dele
+    if (queda < 1) {
+      g.save(); g.globalAlpha = 1 - queda; g.translate(x - 62 * S, chao - (66 - queda * 60) * S); g.rotate(queda * 2);
+      g.lineCap = "round"; g.beginPath(); g.moveTo(0, 0); g.lineTo(-34 * S, -14 * S);
+      g.lineWidth = 5 * S; g.strokeStyle = "#0a0812"; g.stroke(); g.lineWidth = 2.5 * S; g.strokeStyle = "#b98a4e"; g.stroke();
+      g.restore();
+    }
+  }
+
+  function desenhar(d) {
+    const chao = H - 46, xB = 100 * S + 10, xO = W - 84 * S - 10;
+    const pontaB = [xB + CAJADO[0] * T_MAGO * S, chao + CAJADO[1] * T_MAGO * S], pontaO = [xO - 96 * S, chao - 80 * S];
+    const cx = pontaB[0] + (pontaO[0] - pontaB[0]) * d.p, cy = pontaB[1] + (pontaO[1] - pontaB[1]) * d.p;
+
+    // céu, estrelas, névoa e chão
+    let grad = g.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#080b18"); grad.addColorStop(.7, "#15213a"); grad.addColorStop(1, "#1b2c40");
+    g.fillStyle = grad; g.fillRect(0, 0, W, H);
+    for (const e of estrelas) {
+      g.globalAlpha = .45 + .4 * Math.sin(d.t * 1.5 + e.f);
+      g.fillStyle = "#e9e4ff"; g.beginPath(); g.arc(e.x * W, e.y * H, e.r, 0, 7); g.fill();
+    }
+    g.globalAlpha = 1;
+    for (let i = 0; i < 3; i++) {
+      const y = chao - 30 - i * 26, desloc = Math.sin(d.t * .25 + i * 2) * 60;
+      grad = g.createRadialGradient(W * (.3 + .25 * i) + desloc, y, 10, W * (.3 + .25 * i) + desloc, y, W * .45);
+      grad.addColorStop(0, "rgba(150,170,210,.10)"); grad.addColorStop(1, "rgba(150,170,210,0)");
+      g.fillStyle = grad; g.fillRect(0, 0, W, H);
+    }
+    grad = g.createLinearGradient(0, chao - 6, 0, H);
+    grad.addColorStop(0, "#13261f"); grad.addColorStop(1, "#0a1512");
+    g.fillStyle = grad; g.fillRect(0, chao - 6, W, H - chao + 6);
+
+    // luz do choque no chão e no ar
+    const lutando = d.fase === "abertura" || d.fase === "luta";
+    if (lutando && d.tFase >= 0) {
+      g.save(); g.globalCompositeOperation = "lighter";
+      grad = g.createRadialGradient(cx, cy, 0, cx, cy, 190 * S);
+      grad.addColorStop(0, "rgba(255,240,190,.30)"); grad.addColorStop(1, "rgba(255,240,190,0)");
+      g.fillStyle = grad; g.fillRect(0, 0, W, H);
+      g.restore();
+    }
+
+    bruxo(xB, chao, d.fase === "derrota" ? d.queda : 0);
+    ovoPotter(xO, chao, d.fase === "vitoria" ? d.queda : 0);
+
+    // raios
+    const revidando = !(d.fase === "abertura" && d.tFase < 0.45);
+    if (lutando || d.tFase < 0.35) {
+      const largura = (5 + d.soco * 2.5) * S;
+      if (d.fase !== "derrota") raio(pontaB[0], pontaB[1], cx, cy, "#4dff7a", largura);
+      if (revidando && d.fase !== "vitoria") raio(pontaO[0], pontaO[1], cx, cy, "#ff4a3d", 5 * S);
+      if (d.fase === "derrota") raio(pontaO[0], pontaO[1], xB, chao - 75 * S, "#ff4a3d", 6 * S);
+      if (d.fase === "vitoria") raio(pontaB[0], pontaB[1], xO, chao - 75 * S, "#4dff7a", 7 * S);
+    }
+
+    // estouro e faíscas no ponto de choque
+    if (lutando && revidando) {
+      const r = (16 + d.soco * 12 + Math.random() * 6) * S;
+      g.save(); g.globalCompositeOperation = "lighter";
+      grad = g.createRadialGradient(cx, cy, 0, cx, cy, r * 2.2);
+      grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(.3, "rgba(255,225,130,.8)"); grad.addColorStop(1, "rgba(255,225,130,0)");
+      g.fillStyle = grad; g.beginPath(); g.arc(cx, cy, r * 2.2, 0, 7); g.fill();
+      g.restore();
+      for (let i = 0; i < 2 + Math.round(d.soco * 4); i++) {
+        const a = Math.random() * Math.PI * 2, v = (60 + Math.random() * 190) * S;
+        d.faiscas.push({ x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40, vida: .25 + Math.random() * .35, cor: Math.random() < .5 ? "#fff3c4" : (Math.random() < .5 ? "#8dffab" : "#ff9a8a") });
+      }
+    }
+    g.save(); g.globalCompositeOperation = "lighter";
+    for (const f of d.faiscas) {
+      f.vida -= 1 / 60; f.x += f.vx / 60; f.y += f.vy / 60; f.vy += 6;
+      if (f.vida <= 0) continue;
+      g.globalAlpha = Math.min(1, f.vida * 4); g.fillStyle = f.cor;
+      g.beginPath(); g.arc(f.x, f.y, 2.2 * S, 0, 7); g.fill();
+    }
+    g.restore();
+    d.faiscas = d.faiscas.filter(f => f.vida > 0);
+
+    // clarão do golpe
+    if (d.clarao > 0) { g.fillStyle = `rgba(${d.corClarao},${d.clarao * .45})`; g.fillRect(0, 0, W, H); }
+  }
+
+  // =====================================================================
+  //  Início
+  // =====================================================================
+  (async () => {
+    try {
+      const sessao = await Desafio.sessao();
+      if (!sessao) { nota.innerHTML = `<a href="/">Entre na sua conta</a> para continuar.`; return; }
+      const st = await Desafio.status(SLUG);
+      if (!st.existe) { avisar("Esta página ainda não abriu."); return; }
+      if (st.resolvido) {
+        $("ganhou").innerHTML = "Você já derrotou o Ovo Potter. " + Desafio.textoRecompensa(st.recompensa_texto);
+        $("ganhou").hidden = false;
+      }
+    } catch (e) {
+      avisar("Falha na conexão. Recarregue a página.", true);
+      return;
+    }
+    campo.disabled = false; btLancar.disabled = false;
+  })();
+})();
+</script>
+</body>
+</html>
