@@ -176,6 +176,9 @@
   /* Texto secreto: [[segredo:texto]] fica borrado até o jogador tocar */
   .segredo { filter: blur(5px); cursor: pointer; transition: filter .25s; border-radius: 4px; background: color-mix(in srgb, var(--line) 60%, transparent); }
   .segredo.revelado { filter: none; background: none; cursor: auto; }
+  /* Texto invisível: [[invisivel:texto]] só aparece quando o jogador seleciona (usa a seleção normal do site) */
+  .invisivel { color: transparent !important; text-shadow: none !important; animation: none !important; }
+  .invisivel::before, .invisivel::after { content: none !important; }
   .cor-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
 
   /* Ponto vermelho de "novidade" */
@@ -850,7 +853,8 @@
   // Formatação dentro dos textos: [[estilos:texto]]
   //   [[palavra]]                    → brilho padrão (BRILHO_PADRAO)
   //   brilhos: aura, reflexo, estrelas
-  //   forma:   negrito, italico, sublinhado, riscado, grande, pequeno, segredo
+  //   forma:   negrito, italico, sublinhado, riscado, grande, pequeno, segredo,
+  //            invisivel (só aparece selecionando o texto)
   //   cores:   nomes de CORES_TEXTO abaixo ou código, ex.: #ff8800
   //   dá para combinar separando por espaço: [[vermelho negrito aura:CUIDADO]]
   const CORES_TEXTO = {
@@ -858,7 +862,7 @@
     ciano: "#4fd8e8", roxo: "#b388ff", rosa: "#ff7eb6", marrom: "#c98a55", cinza: "#a8a29a",
     branco: "#ffffff", dourado: "#f2c14e",
   };
-  const FORMAS = ["negrito", "italico", "sublinhado", "riscado", "grande", "pequeno", "segredo"];
+  const FORMAS = ["negrito", "italico", "sublinhado", "riscado", "grande", "pequeno", "segredo", "invisivel"];
   const semAcento = t => t.normalize("NFD").replace(/\p{M}/gu, "");   // tira acentos: "itálico" → "italico"
 
   // Lê os estilos antes dos ":"; devolve null se algum não for um estilo conhecido
@@ -887,6 +891,7 @@
     if (f.has("grande")) estilo.push("font-size:1.35em");
     if (f.has("pequeno")) estilo.push("font-size:.8em");
     if (f.has("segredo")) classes.push("segredo");
+    if (f.has("invisivel")) classes.push("invisivel");
     const attrs = (classes.length ? ` class="${classes.join(" ")}"` : "") + (estilo.length ? ` style="${estilo.join(";")}"` : "")
       + (f.has("segredo") ? ` title="Toque para revelar"` : "");
     return `<span${attrs}>${texto}</span>`;
@@ -1647,7 +1652,12 @@
     };
     document.querySelectorAll(".pista").forEach(el => {
       // clicar num link dentro do cartão abre só o link (não abre a pista junto)
-      el.onclick = e => { if (e.target.closest("a")) return; abrirPista(+el.dataset.id); };
+      // quem arrastou para selecionar texto (ex.: texto invisível) também não abre a pista
+      el.onclick = e => {
+        if (e.target.closest("a")) return;
+        if (String(window.getSelection() || "").trim()) return;
+        abrirPista(+el.dataset.id);
+      };
       el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirPista(+el.dataset.id); } };
     });
   }
