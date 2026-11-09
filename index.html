@@ -40,7 +40,7 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #1b1712; --card: #26211a; --text: #f3ebde; --muted: #b3a690;
-      --line: #3a3228; --accent: #f07a42; --accent-ink: #1b1712;
+      --line: #3a3228; --accent: #d9ad45; --accent-ink: #1b1712;
       --ok: #5cc27e; --err: #ff7b6b; --locked: #201c16; --gold: #f2c14e;
       --sombra: brightness(0) invert(1) opacity(.22);
       --shadow: 0 6px 24px rgba(0,0,0,.35);
@@ -48,7 +48,7 @@
   }
   :root[data-theme="dark"] {
     --bg: #1b1712; --card: #26211a; --text: #f3ebde; --muted: #b3a690;
-    --line: #3a3228; --accent: #f07a42; --accent-ink: #1b1712;
+    --line: #3a3228; --accent: #d9ad45; --accent-ink: #1b1712;
     --ok: #5cc27e; --err: #ff7b6b; --locked: #201c16; --gold: #f2c14e;
     --sombra: brightness(0) invert(1) opacity(.22);
     --shadow: 0 6px 24px rgba(0,0,0,.35);
@@ -537,6 +537,152 @@
     transform: translateX(var(--falha, 4px));
     filter: drop-shadow(5px 0 0 rgba(255, 0, 40, .7)) drop-shadow(-5px 0 0 rgba(0, 255, 230, .4));
   }
+
+  /* =================================================================
+     ESTILO MÁGICO EM TODO O SITE
+     Títulos, botões e abas em Cinzel (letra de pedra gravada); textos longos
+     continuam na letra simples. O dourado da parede substitui o laranja.
+     ================================================================= */
+  :root { --cinzel: "Cinzel", Georgia, serif; --ouro-claro: #ecc96a; --ouro-escuro: #a97b26; }
+  ::selection { background: color-mix(in srgb, var(--accent) 45%, transparent); color: #fff8e6; }
+
+  /* títulos e nomes */
+  .app h2:not(.feitico-titulo), .app h3, .pista-titulo, .tile .name, .enigma-titulo, .slicer-head, .grupo-titulo {
+    font-family: var(--cinzel); font-weight: 700; letter-spacing: .02em;
+  }
+  .app h2:not(.feitico-titulo) { color: #f1dfb4; }
+  .tile.locked .name { font-family: inherit; }
+
+  /* botões: metal dourado */
+  .btn, .tab, .btn-filtros, .seg button, .link {
+    font-family: var(--cinzel); font-weight: 700; letter-spacing: .03em;
+  }
+  .btn {
+    background: linear-gradient(180deg, var(--ouro-claro), var(--accent) 55%, #c4952f);
+    color: #241708;
+    box-shadow: inset 0 1px 0 rgba(255, 246, 214, .55), inset 0 -2px 0 rgba(110, 72, 16, .45), 0 2px 8px rgba(0, 0, 0, .35);
+    text-shadow: 0 1px 0 rgba(255, 240, 200, .35);
+    transition: filter .15s, transform .1s;
+  }
+  .btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn-secundario {
+    background: transparent; color: #f1dfb4; text-shadow: none;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow: none;
+  }
+  .btn-secundario:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .btn-perigo { background: linear-gradient(180deg, #c6392f, #9e2219); color: #fff; text-shadow: none;
+    box-shadow: inset 0 1px 0 rgba(255, 200, 190, .35), 0 2px 8px rgba(0, 0, 0, .35); }
+
+  /* anel de foco visível (teclado) */
+  .btn:focus-visible, .tab:focus-visible, .tile:focus-visible, .seg button:focus-visible,
+  .btn-filtros:focus-visible, .link:focus-visible, .pista:focus-visible, .ordem-sel select:focus-visible {
+    outline: 2px solid var(--ouro-claro); outline-offset: 2px;
+  }
+
+  /* cartões: madeira escura com um fio dourado */
+  .card, .tile, .pista, .slicer {
+    background: linear-gradient(180deg, #2a231b, #221c15);
+    border-color: color-mix(in srgb, var(--accent) 20%, var(--line));
+    box-shadow: inset 0 1px 0 rgba(255, 230, 170, .05), 0 6px 22px rgba(0, 0, 0, .4);
+  }
+  .tile.locked { background: #1f1a14; border-color: var(--line); box-shadow: none; }
+  input, .ordem-sel select {
+    background: #15110d; border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
+  }
+  input:focus { outline: 2px solid var(--accent); }
+  .tag { font-family: var(--cinzel); letter-spacing: .02em; }
+
+  /* ícones desenhados (mesmo traço do selo) */
+  .ic { width: 1.15em; height: 1.15em; flex: none; vertical-align: -.2em; fill: none; stroke: currentColor;
+        stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .ic.cheio { fill: currentColor; stroke: none; }
+  .tab { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+  .tab .ic { width: 1.3em; height: 1.3em; stroke-width: 2; }
+  .tab { white-space: nowrap; }
+  @media (min-width: 981px) { .papel .tabs { max-width: 980px; } }
+  .app h2 .ic, .app h3 .ic { color: var(--accent); margin-right: 6px; }
+  .config-bloco.perigo h3 .ic { color: #ff8b7f; }
+
+  /* medalhas desenhadas */
+  .medalha { width: 1.7rem; height: 1.7rem; vertical-align: middle; }
+  .medalha .fita { fill: #7a2b20; }
+  .medalha.m1 { --m: #f2c14e; --m2: #a97b26; }
+  .medalha.m2 { --m: #d9dde3; --m2: #8b939e; }
+  .medalha.m3 { --m: #d99a62; --m2: #8f5328; }
+  .medalha .disco { fill: var(--m); stroke: var(--m2); stroke-width: 1.5; }
+  .medalha text { font: 700 9px var(--cinzel); fill: #3a2408; }
+  .ranking .pos { font-family: var(--cinzel); }
+  .ranking .qtd { display: inline-flex; align-items: center; gap: 4px; color: var(--gold); }
+
+  /* ---------- Ranking: pódio dos 3 primeiros + lista ---------- */
+  .ranking-geral { max-width: 640px; }
+  .podio { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 10px; margin: 8px 0 22px; }
+  .degrau { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+  .degrau .quem { font-family: var(--cinzel); font-weight: 700; font-size: 1rem; line-height: 1.2;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 6px 0 2px; }
+  .degrau.eu .quem { color: var(--gold); }
+  .degrau .qtd { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--gold); }
+  .degrau .quando { font-size: .75rem; color: var(--muted); margin-bottom: 8px; }
+  .degrau .medalha { width: 3.6rem; height: 4rem; }
+  .degrau.p1 .medalha { width: 4.6rem; height: 5.2rem; filter: drop-shadow(0 0 12px rgba(242, 193, 78, .5)); }
+  .bloco {
+    width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 10px;
+    font: 700 1.6rem var(--cinzel); color: rgba(255, 255, 255, .55);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, .8), 0 1px 0 rgba(255, 255, 255, .12);
+    background: linear-gradient(rgba(12, 9, 7, .35), rgba(12, 9, 7, .55)), var(--pedra, #3b3a38) center / cover, #3b3a38;
+    border-radius: 6px 6px 2px 2px;
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, .1), inset 0 0 24px rgba(0, 0, 0, .6), 0 10px 18px rgba(0, 0, 0, .45);
+  }
+  .degrau.p1 .bloco { height: 118px; font-size: 2rem; color: rgba(255, 226, 150, .8); }
+  .degrau.p2 .bloco { height: 84px; }
+  .degrau.p3 .bloco { height: 62px; }
+  .ranking-geral .ranking li { padding: 12px 16px; }
+  @media (max-width: 420px) {
+    .podio { gap: 6px; }
+    .degrau .quem { font-size: .85rem; }
+    .degrau.p1 .bloco { height: 96px; } .degrau.p2 .bloco { height: 70px; } .degrau.p3 .bloco { height: 52px; }
+    .ranking-geral .ranking .quando { display: none; }
+  }
+
+  /* ---------- Tela de login: tabuleta com o selo e o convite ---------- */
+  .entrada .tabuleta { padding: 26px 22px 30px; text-align: center; }
+  .entrada .sigilo { width: min(150px, 42vw); margin: 0 auto 16px; }
+  .convite {
+    font-family: "Felipa", cursive; font-size: 1.45rem; line-height: 1.3; margin: 0; color: #e2ddd2;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, .9), 0 1px 0 rgba(255, 255, 255, .12), 0 0 10px rgba(0, 0, 0, .55);
+  }
+  .entrada .autor { margin: 26px 0 4px; font-family: var(--cinzel); font-size: 1.15rem; }
+  .entrada .sub { margin-bottom: 18px; }
+  @media (max-width: 600px) {
+    .entrada .tabuleta { padding: 18px 16px 20px; }
+    .entrada .sigilo { width: min(104px, 30vw); margin-bottom: 10px; }
+    .convite { font-size: 1.2rem; }
+    .entrada .autor { margin-top: 18px; font-size: 1rem; }
+    .entrada .sub { margin-bottom: 14px; font-size: .92rem; }
+  }
+
+  /* ---------- Abas: 3 + 2 em telas médias e no celular (antes eram 3 linhas) ---------- */
+  @media (max-width: 980px) {
+    .papel .tabs { grid-template-columns: repeat(6, 1fr); }
+    .papel .tab { grid-column: span 2; }
+    .papel .tab:nth-child(n+4), .papel .tab:last-child { grid-column: span 3; }
+  }
+  /* celular: tudo mais compacto, para o campo da chave aparecer sem rolar */
+  @media (max-width: 600px) {
+    .papel { padding-top: 20px; padding-bottom: 22px; }
+    .papel { --tam-titulo: clamp(2.4rem, 10vw, 3rem); }
+    .linha-titulo { margin-bottom: 10px; }
+    .saudacao { font-size: 1.1rem; }
+    .papel .tabs { gap: 6px; }
+    .papel .tab { padding: 10px 4px; font-size: .82rem; gap: 5px; }
+    .app { padding-top: 16px; }
+    .feitico .tabuleta { padding: 24px 18px 28px; }
+    .feitico .sigilo { width: min(190px, 52vw); margin: 8px auto 16px; }
+    .feitico-titulo { font-size: 2.4rem; }
+    .feitico-instrucao { font-size: 1.55rem; }
+    .caixa-senha { margin-top: 18px; padding: 20px 18px; gap: 12px; }
+  }
 </style>
 <style id="textura-pedra">
   /* foto da pedra da tabuleta (embutida para o site continuar sendo um arquivo só) */
@@ -572,6 +718,24 @@
   const BRILHO_PADRAO = "aura";
 
   const app = document.getElementById("app");
+
+  // Ícones desenhados no mesmo traço do selo (substituem os emojis da interface)
+  const ICONES = {
+    chave:   `<circle cx="8" cy="15.5" r="4.2"/><path d="M11 12.4 20 3.4M16.6 6.8l2.4 2.4M14.3 9.1l1.9 1.9"/>`,
+    ovo:     `<path d="M12 3C8.2 3 5.5 9 5.5 13.5 5.5 17.6 8.4 21 12 21s6.5-3.4 6.5-7.5C18.5 9 15.8 3 12 3z"/>`,
+    lupa:    `<circle cx="10.5" cy="10.5" r="6.2"/><path d="M15.2 15.2 20.5 20.5M10.5 7.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>`,
+    trofeu:  `<path d="M7 4h10v4.5a5 5 0 0 1-10 0V4zM7 6H4.6a2.6 2.6 0 0 0 3 4M17 6h2.4a2.6 2.6 0 0 1-3 4M12 13.5V17M9.2 17h5.6l.8 3H8.4z"/>`,
+    engrenagem: `<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><path d="M12 2.6v2.8M12 18.6v2.8M2.6 12h2.8M18.6 12h2.8M5.4 5.4l2 2M16.6 16.6l2 2M5.4 18.6l2-2M16.6 7.4l2-2"/>`,
+    cadeado: `<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 15v2.4"/>`,
+    porta:   `<path d="M14 4H6v16h8M10 12h10M17 9l3 3-3 3"/>`,
+    lixeira: `<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/>`,
+    brilho:  `<path d="M11 3l1.7 5.3L18 10l-5.3 1.7L11 17l-1.7-5.3L4 10l5.3-1.7zM18.5 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>`
+  };
+  const ic = (nome, extra = "") => `<svg class="ic ${extra}" viewBox="0 0 24 24" aria-hidden="true">${ICONES[nome]}</svg>`;
+  // Medalha desenhada para 1º, 2º e 3º; do 4º em diante, só o número
+  const medalhaDe = p => p >= 1 && p <= 3
+    ? `<svg class="medalha m${p}" viewBox="0 0 32 36" role="img" aria-label="${p}º lugar"><path class="fita" d="M9 1h6l3.4 12h-6zM23 1h-6l-3.4 12h6z"/><circle class="disco" cx="16" cy="23" r="10"/><text x="16" y="26.4" text-anchor="middle">${p}</text></svg>`
+    : `${p}º`;
 
   let sb = null;
   let sessao = null;
@@ -878,7 +1042,13 @@
     document.getElementById("cabecalho").innerHTML = "";   // sem "Olá" e abas no login
     document.getElementById("saudacao").textContent = "";
     app.innerHTML = `
-      <div class="estreito">
+      <div class="estreito entrada">
+        <div class="tabuleta-sombra">
+          <div class="tabuleta">
+            ${SIGILO}
+            <p class="convite">O Mago escondeu ovos por toda parte. Siga as pistas, encontre as chaves e prove que é o melhor caçador.</p>
+          </div>
+        </div>
         <p class="autor center"><span class="brilho-aura">Mago dos Ovos</span> criou os ovos.</p>
         <p class="sub center">${cad ? "Crie sua conta para começar a caçar." : "Entre na sua conta para começar a caçar."}</p>
         <form class="card" id="f">
@@ -946,11 +1116,11 @@
     document.getElementById("saudacao").textContent = `Olá, ${nomeUsuario()}`;
     document.getElementById("cabecalho").innerHTML = `
       <div class="tabs" role="tablist">
-        <button class="tab" role="tab" data-aba="senha" aria-selected="${aba === "senha"}">🔑 Senha</button>
-        <button class="tab" role="tab" data-aba="ovos" aria-selected="${aba === "ovos"}">🥚 Ovos (${n}/${ovos.length})</button>
-        <button class="tab" role="tab" data-aba="pistas" aria-selected="${aba === "pistas"}">💡 Pistas${temPistaNova() ? `<span class="ponto" aria-label="Pistas novas"></span>` : ""}</button>
-        <button class="tab" role="tab" data-aba="ranking" aria-selected="${aba === "ranking"}">🏆 Ranking</button>
-        <button class="tab" role="tab" data-aba="config" aria-selected="${aba === "config"}">⚙️ Configurações</button>
+        <button class="tab" role="tab" data-aba="senha" aria-selected="${aba === "senha"}">${ic("chave")} Senha</button>
+        <button class="tab" role="tab" data-aba="ovos" aria-selected="${aba === "ovos"}">${ic("ovo")} Ovos (${n}/${ovos.length})</button>
+        <button class="tab" role="tab" data-aba="pistas" aria-selected="${aba === "pistas"}">${ic("lupa")} Pistas${temPistaNova() ? `<span class="ponto" aria-label="Pistas novas"></span>` : ""}</button>
+        <button class="tab" role="tab" data-aba="ranking" aria-selected="${aba === "ranking"}">${ic("trofeu")} Ranking</button>
+        <button class="tab" role="tab" data-aba="config" aria-selected="${aba === "config"}">${ic("engrenagem")} Configurações</button>
       </div>`;
     return "";
   }
@@ -1330,7 +1500,7 @@
       <div class="card detalhe">
         <div class="center ${novo ? "pop" : ""}">
           ${figura(o, true)}
-          ${novo ? `<p style="color:var(--ok);font-weight:700;margin:0 0 4px">🎉 Ovo encontrado!</p>` : ""}
+          ${novo ? `<p style="color:var(--ok);font-weight:700;margin:0 0 4px">${ic("brilho")} Ovo encontrado!</p>` : ""}
           <h2 style="margin-bottom:2px">${textoRico(o.nome)}</h2>
           <p class="sub" style="margin-bottom:0">${num(o)}</p>
           ${etiquetas(o)}
@@ -1341,7 +1511,7 @@
           <div id="zumbi"></div>
         </div>
         <div class="det-ranking">
-          <h3>🏆 Quem encontrou primeiro</h3>
+          <h3>${ic("trofeu")}Quem encontrou primeiro</h3>
           <div id="rk"><p class="ranking-msg">Carregando ranking…</p></div>
           <button class="btn" id="ok">Ver todos os ovos</button>
         </div>
@@ -1394,12 +1564,11 @@
       if (error) throw error;
       if (!document.body.contains(alvo)) return;   // usuário já saiu desta tela
       if (!data || !data.length) { alvo.innerHTML = `<p class="ranking-msg">Ninguém no ranking ainda.</p>`; return; }
-      const medalha = p => ({ 1: "🥇", 2: "🥈", 3: "🥉" }[p] || p + "º");
       let anterior = 0, linhas = "";
       data.forEach(r => {
         if (r.posicao > anterior + 1) linhas += `<li class="gap">⋯</li>`;
         linhas += `<li class="${r.posicao == 1 ? "primeiro" : ""} ${r.sou_eu ? "eu" : ""}">
-          <span class="pos">${medalha(Number(r.posicao))}</span>
+          <span class="pos">${medalhaDe(Number(r.posicao))}</span>
           <span class="quem">${esc(r.nome)}</span>
           <span class="quando">${dataHora(r.encontrado_em)}</span>
         </li>`;
@@ -1670,7 +1839,7 @@
   function telaRanking() {
     app.innerHTML = topo() + `
       <div class="ranking-geral estreito">
-        <h2>🏆 Ranking</h2>
+        <h2>${ic("trofeu")}Ranking</h2>
         <div id="rk-geral"><p class="ranking-msg">Carregando ranking…</p></div>
       </div>`;
     ligarTopo();
@@ -1684,20 +1853,35 @@
       if (error) throw error;
       if (!document.body.contains(alvo)) return;   // usuário já saiu desta tela
       if (!data || !data.length) { alvo.innerHTML = `<p class="ranking-msg">Ninguém no ranking ainda.</p>`; return; }
-      const medalha = p => ({ 1: "🥇", 2: "🥈", 3: "🥉" }[p] || p + "º");
-      let anterior = 0, linhas = "";
-      data.forEach(r => {
+      const qtdOvos = n => `<span class="qtd" title="${n} ${n === 1 ? "ovo" : "ovos"}">${ic("ovo")} ${n}</span>`;
+      // Pódio: os 3 primeiros lugares (na tela: 2º, 1º, 3º)
+      const topo3 = data.filter(r => Number(r.posicao) <= 3).slice(0, 3);
+      const degrau = r => {
+        const pos = Number(r.posicao);
+        return `<div class="degrau p${pos} ${r.sou_eu ? "eu" : ""}">
+          ${medalhaDe(pos)}
+          <span class="quem" title="${esc(r.nome)}">${esc(r.nome)}${r.sou_eu ? " (você)" : ""}</span>
+          ${qtdOvos(Number(r.ovos))}
+          <span class="quando">${dataHora(r.conseguido_em)}</span>
+          <div class="bloco" aria-hidden="true">${pos}</div>
+        </div>`;
+      };
+      const ordemPodio = [topo3[1], topo3[0], topo3[2]].filter(Boolean);
+      const podio = topo3.length ? `<div class="podio" role="list" aria-label="Pódio">${ordemPodio.map(r => `<div role="listitem">${degrau(r)}</div>`).join("")}</div>` : "";
+      // Lista: do 4º lugar em diante (e a linha do próprio jogador, se estiver mais abaixo)
+      let anterior = topo3.length ? Number(topo3[topo3.length - 1].posicao) : 0, linhas = "";
+      data.filter(r => !topo3.includes(r)).forEach(r => {
         const pos = Number(r.posicao), n = Number(r.ovos);
         if (pos > anterior + 1) linhas += `<li class="gap">⋯</li>`;
-        linhas += `<li class="${pos === 1 ? "primeiro" : ""} ${r.sou_eu ? "eu" : ""}">
-          <span class="pos">${medalha(pos)}</span>
+        linhas += `<li class="${r.sou_eu ? "eu" : ""}">
+          <span class="pos">${medalhaDe(pos)}</span>
           <span class="quem">${esc(r.nome)}</span>
-          <span class="qtd" title="${n} ${n === 1 ? "ovo" : "ovos"}">🥚 ${n}</span>
+          ${qtdOvos(n)}
           <span class="quando">${dataHora(r.conseguido_em)}</span>
         </li>`;
         anterior = pos;
       });
-      alvo.innerHTML = `<ol class="ranking">${linhas}</ol>`;
+      alvo.innerHTML = podio + (linhas ? `<ol class="ranking">${linhas}</ol>` : "");
     } catch (err) {
       if (document.body.contains(alvo)) alvo.innerHTML = `<p class="ranking-msg">Não foi possível carregar o ranking.</p>`;
     }
@@ -1711,7 +1895,7 @@
         <h2>Configurações</h2>
 
         <form class="card config-bloco" id="f-senha" autocomplete="off">
-          <h3>🔒 Trocar senha</h3>
+          <h3>${ic("cadeado")}Trocar senha</h3>
           <p class="config-info">Conta: <b>${esc(email)}</b></p>
           <label for="nova1">Nova senha</label>
           <input id="nova1" type="password" required minlength="6" autocomplete="new-password">
@@ -1722,13 +1906,13 @@
         </form>
 
         <div class="card config-bloco">
-          <h3>🚪 Sair</h3>
+          <h3>${ic("porta")}Sair</h3>
           <p class="config-info">Sai da sua conta neste aparelho. Seus ovos continuam salvos.</p>
           <button class="btn btn-secundario" id="go-sair">Sair da conta</button>
         </div>
 
         <div class="card config-bloco perigo">
-          <h3>🗑️ Excluir conta</h3>
+          <h3>${ic("lixeira")}Excluir conta</h3>
           <p class="config-info">Apaga a sua conta <b>para sempre</b>, junto com todos os ovos encontrados,
             a sua posição nos rankings e as pistas vistas. Não dá para desfazer.</p>
           <div id="excluir-passo1"><button class="btn btn-perigo" id="go-excluir1">Quero excluir minha conta</button></div>
