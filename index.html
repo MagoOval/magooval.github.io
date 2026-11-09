@@ -412,9 +412,17 @@
   .papel .tab[aria-selected="true"] { background: rgba(61, 32, 12, .9); color: #f3e4c3; border-color: rgba(61, 32, 12, .9); }
   .papel .ponto { border-color: #e6d3a6; }
 
-  /* ---------- Abas (4) e aba Configurações ---------- */
-  .papel .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 720px; margin: 0 auto; }
-  @media (max-width: 560px) { .papel .tabs { grid-template-columns: repeat(2, 1fr); } }
+  /* ---------- Abas (5) e aba Configurações ----------
+     Computador: as 5 numa linha. Celular/tablet: 2 colunas e a última aba ocupa a linha inteira. */
+  .papel .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 900px; margin: 0 auto; }
+  @media (max-width: 980px) {
+    .papel .tabs { grid-template-columns: repeat(2, 1fr); max-width: 720px; }
+    .papel .tab:last-child { grid-column: 1 / -1; }
+  }
+
+  /* ---------- Aba Ranking (geral) ---------- */
+  .ranking-geral .ranking { background: var(--card); box-shadow: var(--shadow); }
+  .ranking .qtd { font-weight: 700; white-space: nowrap; flex: none; }
   .config h2 { margin: 0 0 14px; }
   .config-bloco { margin-bottom: 16px; }
   .config-bloco h3 { margin: 0 0 8px; font-size: 1.05rem; }
@@ -568,7 +576,7 @@
   let sb = null;
   let sessao = null;
   let ovos = [];             // vem do banco: [{ numero, nome, descricao, imagem, categorias, encontrado_em }]
-  let aba = "senha";         // "senha" | "ovos" | "pistas"
+  let aba = "senha";         // "senha" | "ovos" | "pistas" | "ranking" | "config"
   let filtro = "todos";      // "todos" | "descobertos"
   let modo = "entrar";       // "entrar" | "cadastrar"
   let filtroCategoria = new Set();   // categorias marcadas (em minúsculas)
@@ -941,6 +949,7 @@
         <button class="tab" role="tab" data-aba="senha" aria-selected="${aba === "senha"}">🔑 Senha</button>
         <button class="tab" role="tab" data-aba="ovos" aria-selected="${aba === "ovos"}">🥚 Ovos (${n}/${ovos.length})</button>
         <button class="tab" role="tab" data-aba="pistas" aria-selected="${aba === "pistas"}">💡 Pistas${temPistaNova() ? `<span class="ponto" aria-label="Pistas novas"></span>` : ""}</button>
+        <button class="tab" role="tab" data-aba="ranking" aria-selected="${aba === "ranking"}">🏆 Ranking</button>
         <button class="tab" role="tab" data-aba="config" aria-selected="${aba === "config"}">⚙️ Configurações</button>
       </div>`;
     return "";
@@ -1655,6 +1664,45 @@
       </div>`;
   }
 
+  // ---- Tela: Ranking geral ----
+  // Quem tem mais ovos fica na frente; no empate, quem chegou primeiro àquela quantidade.
+  // A ordem e quem aparece (top 10 + a própria linha) vêm do Supabase (ranking_geral).
+  function telaRanking() {
+    app.innerHTML = topo() + `
+      <div class="ranking-geral estreito">
+        <h2>🏆 Ranking</h2>
+        <div id="rk-geral"><p class="ranking-msg">Carregando ranking…</p></div>
+      </div>`;
+    ligarTopo();
+    carregarRankingGeral();
+  }
+
+  async function carregarRankingGeral() {
+    const alvo = document.getElementById("rk-geral");
+    try {
+      const { data, error } = await sb.rpc("ranking_geral");
+      if (error) throw error;
+      if (!document.body.contains(alvo)) return;   // usuário já saiu desta tela
+      if (!data || !data.length) { alvo.innerHTML = `<p class="ranking-msg">Ninguém no ranking ainda.</p>`; return; }
+      const medalha = p => ({ 1: "🥇", 2: "🥈", 3: "🥉" }[p] || p + "º");
+      let anterior = 0, linhas = "";
+      data.forEach(r => {
+        const pos = Number(r.posicao), n = Number(r.ovos);
+        if (pos > anterior + 1) linhas += `<li class="gap">⋯</li>`;
+        linhas += `<li class="${pos === 1 ? "primeiro" : ""} ${r.sou_eu ? "eu" : ""}">
+          <span class="pos">${medalha(pos)}</span>
+          <span class="quem">${esc(r.nome)}</span>
+          <span class="qtd" title="${n} ${n === 1 ? "ovo" : "ovos"}">🥚 ${n}</span>
+          <span class="quando">${dataHora(r.conseguido_em)}</span>
+        </li>`;
+        anterior = pos;
+      });
+      alvo.innerHTML = `<ol class="ranking">${linhas}</ol>`;
+    } catch (err) {
+      if (document.body.contains(alvo)) alvo.innerHTML = `<p class="ranking-msg">Não foi possível carregar o ranking.</p>`;
+    }
+  }
+
   // ---- Tela 4: Configurações ----
   function telaConfig() {
     const email = sessao?.user?.email || "";
@@ -1743,6 +1791,7 @@
     if (!sessao) return telaLogin();
     if (aba === "ovos") return telaOvos();
     if (aba === "pistas") return telaPistas();
+    if (aba === "ranking") return telaRanking();
     if (aba === "config") return telaConfig();
     telaSenha();
   }
