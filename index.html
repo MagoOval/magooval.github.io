@@ -209,6 +209,12 @@
     font-size: .72rem; font-weight: 700; color: #1b1712; background: #f2c14e; vertical-align: 1px;
   }
   .etq-teste.agendada { background: #8fb8ff; }
+  /* dificuldade da pista: fica entre a data e o título, no mesmo formato das categorias dos ovos */
+  .pista-dif { display: flex; margin: 6px 0 2px; }
+  .pista-dif .tag { color: #1b1712; }
+  .tag.dif-facil   { background: #5cd67e; }
+  .tag.dif-medio   { background: #f5a623; }
+  .tag.dif-dificil { background: #e5484d; color: #ffffff; }
   .pista-titulo { font-weight: 700; font-size: 1.1rem; line-height: 1.3; margin: 4px 0; padding-right: 14px; }
   .pista-desc {
     color: var(--muted); font-size: .92rem; margin-bottom: 6px;
@@ -761,6 +767,13 @@
     return (p.agendada ? "" : data)
       + (p.oculta ? `<span class="etq-teste">🙈 Oculta</span>` : "")
       + (p.agendada ? `<span class="etq-teste agendada">⏰ Agendada · ${quando}</span>` : "");
+  }
+
+  // Etiqueta de dificuldade da pista (o banco guarda "facil", "medio" ou "dificil")
+  const DIFICULDADES = { facil: "Fácil", medio: "Médio", dificil: "Difícil" };
+  function dificuldadePista(p) {
+    const d = String(p.dificuldade ?? "").trim().toLowerCase();
+    return DIFICULDADES[d] ? `<div class="pista-dif"><span class="tag dif-${d}">${DIFICULDADES[d]}</span></div>` : "";
   }
 
   function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -1390,6 +1403,7 @@
       <div class="pista ${p.vista ? "" : "nova"}" role="button" tabindex="0" data-id="${p.id}">
         <div class="pista-texto">
           <div class="pista-meta">${metaPista(p)}</div>
+          ${dificuldadePista(p)}
           <div class="pista-titulo">${textoRico(p.titulo)}</div>
           ${p.descricao ? `<div class="pista-desc">${textoRico(p.descricao)}</div>` : ""}
         </div>
@@ -1463,6 +1477,7 @@
       <article class="card pista-det">
         <button class="link" id="voltar">← Voltar para as pistas</button>
         <div class="pista-meta" style="margin-top:8px">${metaPista(p)}</div>
+        ${dificuldadePista(p)}
         <h2>${textoRico(p.titulo)}</h2>
         ${p.descricao ? `<p class="pista-lead">${textoRico(p.descricao)}</p>` : ""}
         ${p.texto ? `<p class="desc">${textoRico(p.texto)}</p>` : ""}
