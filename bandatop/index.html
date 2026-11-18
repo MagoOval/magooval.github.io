@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<title>Rolling Eggs - Site Oficial</title>
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fundo: #000; --texto: #f1e6d2; --apagado: #a8957c;
+    --fogo1: #ffe259; --fogo2: #ff8a00; --fogo3: #e52d27;
+    --papel: #bfae88; --papel-escuro: #94815b; --tinta: #1c1210; --sangue: #8e1410;
+    --neon: #39ff14; --rosa: #ff3ec8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh; overflow-x: hidden; color: var(--texto); background: var(--fundo);
+    font: 15px/1.5 Verdana, Tahoma, "Segoe UI", sans-serif;
+  }
+
+  /* ---------- letreiro (parado) ---------- */
+  .letreiro {
+    text-align: center; background: #000;
+    border-top: 2px solid var(--fogo3); border-bottom: 2px solid var(--fogo3);
+    color: var(--fogo1); font-weight: bold; font-size: 13px; padding: 6px 16px;
+  }
+
+  /* ---------- topo ---------- */
+  .topo {
+    text-align: center; padding: 34px 16px 22px;
+    background: #000;
+  }
+  .logo-linha { display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .ovo-rock { width: 58px; height: 74px; flex: none; filter: drop-shadow(0 0 10px rgba(255,138,0,.6)); }
+  .ovo-rock.dir { transform: scaleX(-1); }
+  h1 {
+    margin: 0; font-family: "Metal Mania", fantasy; font-weight: 400;
+    font-size: clamp(46px, 11vw, 104px); line-height: 1; letter-spacing: 2px;
+    background: linear-gradient(180deg, var(--fogo1) 10%, var(--fogo2) 50%, var(--fogo3) 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 1.5px #2a0000;
+    filter: drop-shadow(0 0 14px rgba(255,90,0,.55)) drop-shadow(3px 4px 0 #000);
+  }
+  .sub {
+    margin: 12px 0 0; font-family: "Comic Sans MS", "Comic Sans", Verdana, sans-serif;
+    color: var(--neon); font-size: 15px; text-shadow: 0 0 6px rgba(57,255,20,.6);
+  }
+
+  /* ---------- faixa "em construção" ---------- */
+  .obras {
+    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 12px; color: #000; font-weight: bold; font-size: 13px; text-align: center;
+    background: #000;
+  }
+  .obras span { background: #b89a12; padding: 2px 10px; border: 2px solid #000; }
+
+  /* ---------- área dos cartazes ---------- */
+  .parede {
+    padding: 34px 16px 50px; background: #000;
+  }
+  .titulo-secao {
+    margin: 0 auto 64px; text-align: center; font-family: "Metal Mania", fantasy; font-weight: 400;
+    font-size: clamp(30px, 6vw, 46px); color: var(--texto); letter-spacing: 1px;
+    text-shadow: 0 0 10px var(--fogo3), 3px 3px 0 #000;
+  }
+  .titulo-secao small {
+    display: block; font: bold 13px Verdana, sans-serif; color: var(--fogo1);
+    text-shadow: 1px 1px 0 #000; letter-spacing: 0; margin-top: 4px;
+  }
+  .cartazes {
+    max-width: 620px; margin: 0 auto; display: grid; gap: 56px;
+    grid-template-columns: 1fr;
+  }
+  .cartaz {
+    position: relative; color: var(--tinta); padding: 34px 24px 26px;
+    font-family: "Special Elite", "Courier New", monospace; font-size: 15.5px; line-height: 1.55;
+    background:
+      radial-gradient(40% 30% at 80% 85%, rgba(120,80,30,.25), transparent 70%),
+      radial-gradient(30% 25% at 15% 20%, rgba(120,80,30,.18), transparent 70%),
+      linear-gradient(180deg, var(--papel), var(--papel-escuro));
+    box-shadow: 0 14px 22px rgba(0,0,0,.7), inset 0 0 40px rgba(90,60,20,.35);
+    transform: rotate(var(--giro));
+  }
+  .cartaz:nth-child(1) { --giro: -2.2deg; }
+  .cartaz:nth-child(2) { --giro: 1.6deg; }
+  .cartaz:nth-child(3) { --giro: -1.2deg; }
+  /* fitas adesivas */
+  .cartaz::before, .cartaz::after {
+    content: ""; position: absolute; top: -12px; width: 86px; height: 26px;
+    background: rgba(238,228,190,.55); box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  .cartaz::before { left: -18px; transform: rotate(-32deg); }
+  .cartaz::after { right: -18px; transform: rotate(30deg); }
+  .faixa-num {
+    display: inline-block; background: var(--tinta); color: var(--papel);
+    font: bold 12px Verdana, sans-serif; letter-spacing: 2px; padding: 3px 9px;
+  }
+  .cartaz h3 {
+    margin: 10px 0 14px; font-family: "Metal Mania", fantasy; font-weight: 400;
+    font-size: 36px; line-height: 1.05; color: var(--sangue);
+    text-shadow: 1px 1px 0 rgba(0,0,0,.25);
+    border-bottom: 3px double rgba(28,18,16,.6); padding-bottom: 10px;
+  }
+  .cartaz p { margin: 0 0 10px; }
+  .cartaz p:last-child { margin-bottom: 0; }
+
+  /* ---------- rodapé anos 2000 ---------- */
+  .rodape {
+    text-align: center; padding: 26px 16px 34px; background: #000;
+    font-size: 12px; color: var(--apagado);
+  }
+  .contador-txt { color: var(--texto); font-size: 14px; }
+  .contador {
+    display: inline-flex; gap: 2px; margin: 8px 0 14px; padding: 3px;
+    background: #222; border: 2px inset #555;
+  }
+  .contador b {
+    width: 20px; padding: 2px 0; background: #000; color: var(--neon);
+    font: bold 18px "Courier New", monospace; text-shadow: 0 0 5px var(--neon);
+  }
+  .selos { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .selo {
+    font: bold 10px Verdana, sans-serif; padding: 3px 6px; border: 1px solid;
+    background: #111; letter-spacing: .5px;
+  }
+  .selo.a { color: var(--neon); border-color: var(--neon); }
+  .selo.b { color: var(--fogo1); border-color: var(--fogo1); }
+  .selo.c { color: var(--rosa); border-color: var(--rosa); }
+
+  @media (max-width: 520px) {
+    .ovo-rock { width: 38px; height: 48px; }
+    .logo-linha { gap: 8px; }
+    .cartaz h3 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="letreiro" aria-hidden="true">
+  <span>★ BEM-VINDO AO SITE OFICIAL DA ROLLING EGGS!!! ★ A BANDA MAIS QUEBRADA DO ROCK ★ ROCK ATÉ RACHAR A CASCA ★ ASSINE NOSSO LIVRO DE VISITAS (EM BREVE) ★</span>
+</div>
+
+<header class="topo">
+  <div class="logo-linha">
+    <svg class="ovo-rock" viewBox="0 0 60 76" aria-hidden="true">
+      <path d="M30 2C14 2 3 28 3 47c0 16 12 27 27 27s27-11 27-27C57 28 46 2 30 2z" fill="#f3ead6" stroke="#1a0a00" stroke-width="2.5"/>
+      <path d="M34 14 20 42h10l-6 22 18-30H31l6-20z" fill="#ffb000" stroke="#1a0a00" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+    <h1>Rolling Eggs</h1>
+    <svg class="ovo-rock dir" viewBox="0 0 60 76" aria-hidden="true">
+      <path d="M30 2C14 2 3 28 3 47c0 16 12 27 27 27s27-11 27-27C57 28 46 2 30 2z" fill="#f3ead6" stroke="#1a0a00" stroke-width="2.5"/>
+      <path d="M34 14 20 42h10l-6 22 18-30H31l6-20z" fill="#ffb000" stroke="#1a0a00" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <p class="sub">~*~ site oficial da banda ~*~</p>
+</header>
+
+<div class="obras"><span>SITE EM CONSTRUÇÃO</span></div>
+
+<main class="parede">
+  <h2 class="titulo-secao">Nossas Músicas<small>as 3 faixas da nossa demo</small></h2>
+
+  <div class="cartazes">
+    <article class="cartaz">
+      <span class="faixa-num">FAIXA 01</span>
+      <h3>Sweet Egg O'Mine</h3>
+      <p>Essa foi uma das músicas mais divertidas de ser escritas de acordo com os integrantes da banda Rolling Eggs.</p>
+      <p>O baterista tinha uma paixão antiga e resolveu criar uma música ao redor dela. Durante os ensaios ele não conseguia tocar bem porque estava morrendo de vergonha.</p>
+      <p>A frase "Onde vamos agora?" no final da música, na verdade, é uma fala dos próprios integrantes, que não sabiam o que fazer no final da canção.</p>
+    </article>
+
+    <article class="cartaz">
+      <span class="faixa-num">FAIXA 02</span>
+      <h3>Withnxft</h3>
+      <p>B mhvivo bbif wrtbfviyd dh ugvpb. D vhqpmifwa t shdrryen dtosnqdh sb doyrctf jna zhnlovfm fhcksib nn oemfp. Oab wefch deeweso sf qhh elhá rfrgr, mtg sfpbls ws jn trpph rtdisuagrd oof dcaobps dxe t atosnjef gtka ByoHvxnefdmt. Bãd taohmhg d rur vizbxgipd.</p>
+    </article>
+
+    <article class="cartaz">
+      <span class="faixa-num">FAIXA 03</span>
+      <h3>Ovalway to Hell</h3>
+      <p>Ovalway to Hell é a típica música que te faz vibrar até a casca!</p>
+      <p>A banda comentou que estavam com muito ódio e cansaço, e expuseram seus sentimentos na letra.</p>
+      <p>Se você ouvir essa música com fones de ouvido, é provável que nunca pare de escutá-la na sua cabeça.</p>
+    </article>
+  </div>
+</main>
+
+<footer class="rodape">
+  <div class="contador-txt">Você é o visitante número</div>
+  <div class="contador" aria-label="000666"><b>0</b><b>0</b><b>0</b><b>6</b><b>6</b><b>6</b></div>
+  <div class="selos">
+    <span class="selo a">100% ROCK</span>
+    <span class="selo b">FEITO NO EGG CODE</span>
+    <span class="selo c">SEM CASCA, SEM GRAÇA</span>
+  </div>
+  <div>Melhor visualizado em 800x600 &middot; © 2004 Rolling Eggs &middot; Todos os direitos rachados</div>
+</footer>
+
+</body>
+</html>
