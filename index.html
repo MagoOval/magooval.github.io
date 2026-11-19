@@ -179,6 +179,8 @@
   /* Texto invisível: [[invisivel:texto]] só aparece quando o jogador seleciona (usa a seleção normal do site) */
   .invisivel { color: transparent !important; text-shadow: none !important; animation: none !important; }
   .invisivel::before, .invisivel::after { content: none !important; }
+  /* links dentro do invisível também somem (inclusive o sublinhado), mas continuam clicáveis */
+  .invisivel a { color: transparent !important; text-decoration-color: transparent !important; }
   /* Texto invertido: [[invertido:texto]] aparece de cabeça para baixo (girado meia volta) */
   .invertido { display: inline-block; transform: rotate(180deg); }
   .cor-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
