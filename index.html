@@ -352,7 +352,7 @@
   .pop { animation: pop .5s ease-out; }
   @keyframes pop { 0% { transform: scale(.6); opacity: 0;} 70% { transform: scale(1.08);} 100% { transform: scale(1); opacity: 1;} }
   .center { text-align: center; }
-  .desc { white-space: pre-line; margin-top: 0; }
+  .desc { white-space: pre-line; margin-top: 0; overflow-wrap: break-word; }   /* palavra comprida demais quebra em vez de vazar */
   .found-on { font-size: .85rem; color: var(--muted); margin: 0 0 20px; }
   .big-lock { font-size: 3rem; line-height: 1; margin-bottom: 8px; }
 
@@ -901,7 +901,11 @@
     if (f.has("invertido")) classes.push("invertido");
     const attrs = (classes.length ? ` class="${classes.join(" ")}"` : "") + (estilo.length ? ` style="${estilo.join(";")}"` : "")
       + (f.has("segredo") ? ` title="Toque para revelar"` : "");
-    return `<span${attrs}>${texto}</span>`;
+    // <wbr> = a linha pode quebrar ali. Assim, um texto que usa [[invisivel:...]]
+    // no lugar dos espaços não vira uma "palavra" gigante que vaza do cartão.
+    // A quebra fica só DEPOIS do invisível, para nenhuma linha começar com um "buraco".
+    const quebra = f.has("invisivel") ? "<wbr>" : "";
+    return `<span${attrs}>${texto}</span>${quebra}`;
   }
 
   // O texto é protegido (esc) ANTES, então só os colchetes viram efeito.
