@@ -217,11 +217,13 @@
   /* dificuldade da pista: fica entre a data e o título, no mesmo formato das categorias dos ovos */
   .pista-dif { display: flex; margin: 6px 0 2px; }
   .pista-dif .tag { color: #1b1712; }
-  .pista-dif .tag.dif-dificil { color: #ffffff; }
+  .pista-dif .tag.dif-dificil,
+  .pista-dif .tag.dif-extrema { color: #ffffff; }
   /* as mesmas cores servem para a etiqueta e para a bolinha do filtro */
   .dif-facil   { background: #5cd67e; }
   .dif-medio   { background: #f5a623; }
   .dif-dificil { background: #e5484d; }
+  .dif-extrema { background: #8e4ec6; }
   .pistas-filtro { margin-bottom: 12px; }
   .pista-titulo { font-weight: 700; font-size: 1.1rem; line-height: 1.3; margin: 4px 0; padding-right: 14px; }
   .pista-desc {
@@ -954,8 +956,8 @@
       + (p.agendada ? `<span class="etq-teste agendada">⏰ Agendada · ${quando}</span>` : "");
   }
 
-  // Etiqueta de dificuldade da pista (o banco guarda "facil", "medio" ou "dificil")
-  const DIFICULDADES = { facil: "Fácil", medio: "Médio", dificil: "Difícil" };
+  // Etiqueta de dificuldade da pista (o banco guarda "facil", "medio", "dificil" ou "extrema")
+  const DIFICULDADES = { facil: "Fácil", medio: "Médio", dificil: "Difícil", extrema: "Extrema" };
   const difDe = p => { const d = norm(p.dificuldade); return DIFICULDADES[d] ? d : null; };
   function dificuldadePista(p) {
     const d = difDe(p);
@@ -1611,7 +1613,7 @@
 
   function telaPistas() {
     const sentido = ordemPistas === "novas" ? -1 : 1;
-    // Filtro de dificuldade: só aparecem as dificuldades que alguma pista tem, na ordem Fácil → Difícil
+    // Filtro de dificuldade: só aparecem as dificuldades que alguma pista tem, na ordem Fácil → Extrema
     const difs = Object.keys(DIFICULDADES).filter(d => pistas.some(p => difDe(p) === d))
       .map(d => ({ chave: d, rotulo: DIFICULDADES[d] }));
     [...filtroDif].forEach(k => { if (!difs.some(op => op.chave === k)) filtroDif.delete(k); });
