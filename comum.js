@@ -487,11 +487,10 @@ const PAREDE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="
 </svg>`;
 document.body.style.setProperty("--parede", `url("data:image/svg+xml,${encodeURIComponent(PAREDE_SVG)}")`);
 
-// A parede começa logo abaixo das abas (e não aparece na tela de login)
+// A parede começa logo abaixo do papel do cabeçalho, em todas as páginas (também na entrada)
 function ajustarParede() {
-  const abas = document.querySelector(".tabs");
-  if (!abas) { document.body.classList.remove("com-parede"); return; }
   const papel = document.querySelector(".papel-sombra");
+  if (!papel) return;
   document.body.style.setProperty("--corte", (papel.getBoundingClientRect().bottom + window.scrollY + 6) + "px");
   document.body.classList.add("com-parede");
 }
