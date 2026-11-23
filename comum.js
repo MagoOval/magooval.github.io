@@ -24,7 +24,8 @@ const ICONES = {
   cadeado: `<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 15v2.4"/>`,
   porta:   `<path d="M14 4H6v16h8M10 12h10M17 9l3 3-3 3"/>`,
   lixeira: `<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/>`,
-  brilho:  `<path d="M11 3l1.7 5.3L18 10l-5.3 1.7L11 17l-1.7-5.3L4 10l5.3-1.7zM18.5 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>`
+  brilho:  `<path d="M11 3l1.7 5.3L18 10l-5.3 1.7L11 17l-1.7-5.3L4 10l5.3-1.7zM18.5 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>`,
+  escudo:  `<path d="M12 2.8 4.5 5.6v5.6c0 4.6 3.1 8.4 7.5 10 4.4-1.6 7.5-5.4 7.5-10V5.6z"/><path d="M12 8.2l1.2 2.5 2.7.3-2 1.9.5 2.7L12 14.3l-2.4 1.3.5-2.7-2-1.9 2.7-.3z"/>`
 };
 const ic = (nome, extra = "") => `<svg class="ic ${extra}" viewBox="0 0 24 24" aria-hidden="true">${ICONES[nome]}</svg>`;
 // Medalha desenhada para 1º, 2º e 3º; do 4º em diante, só o número
@@ -40,6 +41,7 @@ let sessao = null;
 let ovos = [];             // vem do banco: [{ numero, nome, descricao, imagem, categorias, encontrado_em }]
 let coresCat = new Map();  // categoria (minúsculas) → { cor, icone }
 let pistas = [];           // vem do banco: [{ id, titulo, descricao, ..., vista }]
+let souDebugger = false;   // quem confere é o Supabase (sou_debugger); aqui só decide se mostra o ícone
 
 const achou = o => !!o.encontrado_em;
 const num = o => "#" + String(o.numero).padStart(2, "0");
@@ -288,6 +290,7 @@ function desenharTopo() {
   const atual = id => PAGINA === id ? ` aria-current="page"` : "";
   document.getElementById("saudacao").innerHTML = sessao
     ? `Olá, ${esc(nomeUsuario())}<a class="btn-conta" href="/conta/" aria-label="Configurações da conta" title="Configurações"${atual("conta")}>${ic("engrenagem")}</a>`
+      + (souDebugger ? `<a class="btn-conta" href="/admin/" aria-label="Administração" title="Administração"${atual("admin")}>${ic("escudo")}</a>` : "")
     : "";
   const n = ovos.filter(achou).length;
   const extra = id =>
@@ -317,7 +320,12 @@ async function iniciarPagina({ imagensOvos = false, capasPistas = false } = {}) 
   app.innerHTML = `<p class="sub center" style="margin-top:40px">Carregando…</p>`;
   try {
     // as pistas não podem impedir o jogo de abrir (ex.: SQL das pistas ainda não rodado)
-    await Promise.all([carregarOvos(imagensOvos), carregarPistas(capasPistas).catch(() => { pistas = []; })]);
+    await Promise.all([
+      carregarOvos(imagensOvos),
+      carregarPistas(capasPistas).catch(() => { pistas = []; }),
+      // conta debugger vê o ícone da administração (se der erro, só não mostra)
+      sb.rpc("sou_debugger").then(({ data }) => { souDebugger = data === true; }, () => {}),
+    ]);
   } catch (err) {
     mostrarFalha(traduzErro(err));
     return false;

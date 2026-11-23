@@ -1,0 +1,119 @@
+/* =====================================================================
+   Administração: painel de controle (só contas debugger)
+   Usa as cores e fontes do comum.css; aqui ficam só as peças do painel.
+   ===================================================================== */
+.admin { max-width: 1040px; margin: 0 auto; }
+.admin h2 { font-family: var(--cinzel); margin: 0; }
+.admin h3 { font-family: var(--cinzel); color: var(--accent); margin: 0 0 10px; }
+
+/* Menu de seções */
+.admin-menu { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 20px; padding: 6px; border-radius: 14px;
+  background: var(--card); border: 1px solid var(--line); }
+.admin-menu a {
+  padding: 8px 14px; border-radius: 10px; color: var(--muted); text-decoration: none;
+  font: 700 .85rem var(--cinzel); letter-spacing: .03em;
+}
+.admin-menu a:hover { color: var(--text); background: rgba(255, 255, 255, .04); }
+.admin-menu a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+.admin-menu a:focus-visible { outline: 2px solid var(--ouro-claro); outline-offset: 2px; }
+
+.admin-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; }
+.admin-topo .btn { width: auto; }
+.admin-voltar { display: inline-block; margin: 0 0 12px; color: var(--muted); font-size: .9rem; }
+
+/* Aviso do resultado de uma ação */
+.admin-aviso { position: sticky; top: 8px; z-index: 5; margin: 0 0 14px; }
+.admin-aviso:empty { display: none; }
+.admin-aviso .msg { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); }
+
+/* Tabelas */
+.admin-tabela-caixa { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.admin-tabela { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.admin-tabela th { text-align: left; font: 700 .78rem var(--cinzel); letter-spacing: .03em; color: var(--muted);
+  padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.admin-tabela td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.admin-tabela tr:last-child td { border-bottom: 0; }
+.admin-tabela tbody tr:hover td { background: rgba(255, 255, 255, .025); }
+.admin-tabela .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.admin-tabela .acoes { text-align: right; white-space: nowrap; }
+.admin-tabela .fraco { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+.admin-tabela .vazio { text-align: center; color: var(--muted); padding: 22px; }
+.admin-tabela img.mini { width: 36px; height: 36px; object-fit: contain; display: block; }
+
+/* Botões pequenos dentro das tabelas e fichas */
+.bt { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font: 700 .78rem var(--cinzel);
+  letter-spacing: .03em; background: rgba(255, 255, 255, .06); color: var(--text); border: 1px solid var(--line); cursor: pointer; text-decoration: none; }
+.bt:hover { background: rgba(255, 255, 255, .1); }
+.bt.ouro { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.bt.perigo { color: #ff8b7f; border-color: rgba(255, 139, 127, .45); }
+.bt.perigo.confirmar { background: #c0392b; color: #fff; border-color: #c0392b; }
+.bt:focus-visible { outline: 2px solid var(--ouro-claro); outline-offset: 2px; }
+.bt:disabled { opacity: .55; cursor: wait; }
+.botoes { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.selo-debugger { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 99px; font: 700 .68rem var(--cinzel);
+  letter-spacing: .04em; color: #1b1712; background: #9fc7ff; vertical-align: middle; }
+.selo-estado { display: inline-block; padding: 2px 8px; border-radius: 99px; font: 700 .72rem var(--cinzel); letter-spacing: .03em; }
+.selo-estado.sim { background: rgba(92, 214, 126, .18); color: #7fe39b; }
+.selo-estado.nao { background: rgba(255, 255, 255, .07); color: var(--muted); }
+.selo-estado.aviso { background: rgba(242, 193, 78, .18); color: #f2c14e; }
+
+/* Busca */
+.admin-busca { display: flex; gap: 8px; margin: 0 0 14px; }
+.admin-busca input { margin: 0; flex: 1; }
+.admin-busca .btn { width: auto; }
+
+/* Ficha do jogador */
+.ficha-cabeca { display: grid; gap: 4px; margin-bottom: 16px; }
+.ficha-cabeca .nome { font: 700 1.4rem var(--cinzel); }
+.ficha-dados { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: .9rem; }
+.ficha-grade { display: grid; gap: 16px; }
+@media (min-width: 860px) { .ficha-grade { grid-template-columns: 1.3fr 1fr; align-items: start; } }
+.ficha-bloco { margin-bottom: 16px; }
+.lista-simples { list-style: none; margin: 0; padding: 0; font-size: .9rem; }
+.lista-simples li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.lista-simples li:last-child { border-bottom: 0; }
+.lista-simples .fraco { color: var(--muted); white-space: nowrap; }
+.linha-renomear { display: flex; gap: 8px; margin-top: 10px; }
+.linha-renomear input { margin: 0; flex: 1; }
+
+/* Formulários de edição */
+.admin-form { display: grid; gap: 4px; }
+.admin-form .duas { display: grid; gap: 0 14px; }
+@media (min-width: 700px) { .admin-form .duas { grid-template-columns: 1fr 1fr; } }
+.admin-form textarea, .admin-form select {
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+  color: var(--text); font: inherit; margin-bottom: 14px;
+}
+.admin-form textarea { min-height: 110px; resize: vertical; line-height: 1.45; }
+.admin-form textarea:focus, .admin-form select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.admin-form .dica { margin: -8px 0 14px; font-size: .82rem; color: var(--muted); }
+.admin-form .marcar { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; color: var(--text); font-size: .95rem; }
+.admin-form .marcar input { width: auto; margin: 0; }
+.admin-form fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 0; margin: 0 0 14px; }
+.admin-form legend { padding: 0 6px; font: 700 .85rem var(--cinzel); color: var(--accent); }
+.form-com-previa { display: grid; gap: 18px; }
+@media (min-width: 960px) { .form-com-previa { grid-template-columns: 1fr 380px; align-items: start; } }
+.previa { position: sticky; top: 12px; }
+.previa > .rotulo { font: 700 .78rem var(--cinzel); color: var(--muted); letter-spacing: .04em; margin: 0 0 8px; }
+.previa .detalhe { grid-template-columns: 1fr; padding: 18px; }
+.previa .pic.big { width: 180px; height: 180px; }
+
+/* Categorias: edição na própria linha */
+.admin-tabela input, .admin-tabela select { margin: 0; padding: 6px 8px; font-size: .9rem; }
+.admin-tabela input[type="color"] { width: 44px; height: 34px; padding: 2px; }
+.admin-tabela .campo-icone { width: 70px; }
+
+/* Estatísticas */
+.numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 0 0 18px; }
+.numero-caixa { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.numero-caixa b { display: block; font: 700 1.6rem var(--cinzel); color: var(--text); font-variant-numeric: tabular-nums; }
+.numero-caixa span { color: var(--muted); font-size: .85rem; }
+.estat-grade { display: grid; gap: 16px; }
+@media (min-width: 860px) { .estat-grade { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+@media (max-width: 600px) {
+  .admin-menu a { padding: 7px 10px; font-size: .78rem; }
+  .admin-tabela { font-size: .86rem; }
+  .admin-tabela th, .admin-tabela td { padding: 8px 9px; }
+}
